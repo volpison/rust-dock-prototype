@@ -1,0 +1,13 @@
+[package]
+name = "rust-dock-prototype"
+version = "0.1.0"
+edition = "2021"
+description = "Prototype: Photoshop-style detachable panels as real OS windows, in pure Rust."
+
+[lib]
+name = "dock"
+path = "src/lib.rs"
+
+# No dependencies yet: the panel layout model is pure logic.
+# The egui/eframe/egui_dock UI layer arrives in its own PR (see ROADMAP.md).
+[dependencies]
