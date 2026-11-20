@@ -113,7 +113,14 @@ impl eframe::App for DockApp {
         let mut viewer = Viewer {
             detach_requests: Vec::new(),
         };
-        DockArea::new(&mut self.dock).show_inside(ui, &mut viewer);
+        if self.layout.docked().is_empty() {
+            // Empty state: every panel is in its own window.
+            ui.centered_and_justified(|ui| {
+                ui.label("All panels are in their own windows. Use \"Dock back\" in a panel's window, or close it, to bring it here.");
+            });
+        } else {
+            DockArea::new(&mut self.dock).show_inside(ui, &mut viewer);
+        }
 
         for id in viewer.detach_requests {
             self.detach(id);
