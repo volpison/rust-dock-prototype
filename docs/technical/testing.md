@@ -3,6 +3,7 @@
 ## Running the tests
 
 ```
+cargo fmt --check                   # formatting (run `cargo fmt` to fix it)
 cargo test                          # layout rules (tests/layout.rs); also builds the window layer
 cargo run                           # try the window layer by hand
 node --test "scripts/*.test.mjs"    # tests of the docs check
@@ -22,9 +23,9 @@ The Node commands need Node 20 or newer. They are run by CI, so you only need th
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request:
 
 - **docs** (Ubuntu): the docs check tests and the docs check itself.
-- **rust** (Windows): `cargo test --locked`, which builds everything and runs the layout tests. Windows is the platform the maintainer uses. macOS and Linux are not tested yet.
+- **rust** (Windows): `cargo fmt --check`, then `cargo test --locked`, which builds everything and runs the layout tests. Windows is the platform the maintainer uses. macOS and Linux are not tested yet.
 
-CI does not run the program or check formatting (`cargo fmt`) or lints (`cargo clippy`) yet.
+CI does not run the program or check lints (`cargo clippy`) yet.
 
 ## Writing a test
 
