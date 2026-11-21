@@ -34,3 +34,8 @@
 - **What:** the Windows job runs `cargo fmt --check` before the tests. The code was formatted in its own pull request first, so the check starts green.
 - **Why:** one agreed layout keeps diffs about changes, not spacing.
 - **Left out:** `cargo clippy`. Lints can only be checked once the whole program is compiled, and the first run may show warnings to review; it goes in its own pull request.
+
+## 2026-11-21: Drag-out detaches on release; live tear-off later
+- **What:** dragging a tab out of the window will detach the panel when the button is released outside the window, placed at the cursor. Details in [the plan](drag-out-plan.md).
+- **Why:** it needs only the pointer position, which winit usually keeps sending during a drag. A window that follows the cursor needs the OS to hand over a drag begun in another window, which is likely to fail on Windows.
+- **Left out:** live tear-off, and dropping a detached window onto a chosen spot in the dock.

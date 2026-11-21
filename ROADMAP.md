@@ -5,7 +5,7 @@
 - Window layer (`src/app.rs`, `src/panels.rs`): egui + eframe + egui_dock. Right-click a tab, "Detach to window", and the panel becomes a real OS window; "Dock back" or closing that window puts it back. *Compiles and runs on Windows: docking, splitting, detaching and docking back confirmed.*
 
 ## Next
-1. Drag a tab out of the window to detach it under the cursor.
+1. Drag a tab out of the window to detach it under the cursor (see [the plan](docs/technical/drag-out-plan.md)).
 2. Drag a detached panel back onto the dock.
 3. Remember window positions between runs (needs a versioned save format, see the guidelines).
 
