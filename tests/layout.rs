@@ -47,7 +47,10 @@ fn unknown_panels_are_rejected() {
     let x = PanelId(99);
     assert_eq!(l.detach(x, None), Err(LayoutError::UnknownPanel(x)));
     assert_eq!(l.redock(x), Err(LayoutError::UnknownPanel(x)));
-    assert_eq!(l.set_position(x, (0.0, 0.0)), Err(LayoutError::UnknownPanel(x)));
+    assert_eq!(
+        l.set_position(x, (0.0, 0.0)),
+        Err(LayoutError::UnknownPanel(x))
+    );
 }
 
 #[test]
