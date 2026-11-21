@@ -36,7 +36,10 @@ impl Layout {
                 docked.push(p);
             }
         }
-        Self { docked, detached: Vec::new() }
+        Self {
+            docked,
+            detached: Vec::new(),
+        }
     }
 
     pub fn docked(&self) -> &[PanelId] {
@@ -66,7 +69,10 @@ impl Layout {
             .position(|p| *p == id)
             .ok_or(LayoutError::UnknownPanel(id))?;
         self.docked.remove(index);
-        self.detached.push(DetachedWindow { panel: id, position });
+        self.detached.push(DetachedWindow {
+            panel: id,
+            position,
+        });
         Ok(())
     }
 
