@@ -1,6 +1,12 @@
 # Plan: drag a tab out of the window to detach it
 
-Status: plan, not built. The first step is an experiment that settles the main risks.
+Status: step 1 (the experiment) is done and step 2 (drag a tab out to detach) is built. Steps 3 and 4 are not.
+
+## What the experiment found (Windows, 100% scaling, one monitor)
+- While the mouse button is held, pointer positions keep arriving after the cursor leaves the window (down to 833 points left of it), and the release is reported outside the window.
+- egui sends a "pointer gone" event as the cursor crosses the edge, but the drag continues.
+- `egui_dock` does not tell the app which tab is being dragged (`on_tab_button`'s `drag_started` never fired), so the dragged tab is taken to be the tab under the pointer when the button went down.
+- Not tested: the right and bottom edges, a second monitor, other scaling, macOS, Linux.
 
 ## Goal
 Drag a tab out of the main window. When it is released outside the window, the panel opens as its own window under the cursor. Today a panel is detached from the tab's context menu ("Detach to window").

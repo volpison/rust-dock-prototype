@@ -15,7 +15,8 @@ The Node commands need Node 20 or newer. They are run by CI, so you only need th
 ## What the tests cover
 
 - **Layout rules** (`src/layout.rs`): `tests/layout.rs`. A panel is docked or detached, never both and never lost; unknown panels and double moves are refused. These are pure, so they are fast and need no window.
-- **Window layer** (`src/app.rs`, `src/panels.rs`): not covered by automatic tests. It is checked by building it and by running the program: detach a panel, dock it back, close a detached window, detach every panel.
+- **Screen geometry** (`src/geometry.rs`): `tests/geometry.rs`. Outside-the-window test with and without a margin, window-to-screen conversion (with numbers from a real run), and where a dropped window is placed.
+- **Window layer** (`src/app.rs`, `src/panels.rs`): not covered by automatic tests. It is checked by building it and by running the program: detach a panel from the menu, drag a tab out and let go outside the window, dock it back, close a detached window, detach every panel.
 - **Docs check** (`scripts/check-docs.mjs`): `scripts/check-docs.test.mjs`.
 
 ## What CI does
