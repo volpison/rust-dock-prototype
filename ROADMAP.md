@@ -2,12 +2,12 @@
 
 ## Done
 - Panel layout rules (`src/layout.rs`): each panel is docked or detached, never both, never lost.
+- Window layer (`src/app.rs`, `src/panels.rs`): egui + eframe + egui_dock. Right-click a tab, "Detach to window", and the panel becomes a real OS window; "Dock back" or closing that window puts it back. *Compiles and runs on Windows: docking, splitting, detaching and docking back confirmed.*
 
 ## Next
-1. Window layer: `egui` + `eframe` + `egui_dock`, with detached panels shown through egui viewports (real OS windows). Detach from a tab menu; closing the window re-docks the panel.
-2. Drag a tab out of the window to detach it under the cursor.
-3. Drag a detached panel back onto the dock.
-4. Remember window positions between runs (needs a versioned save format, see the guidelines).
+1. Drag a tab out of the window to detach it under the cursor.
+2. Drag a detached panel back onto the dock.
+3. Remember window positions between runs (needs a versioned save format, see the guidelines).
 
 ## What it is not
 - Not a finished app. It is a prototype meant to be moved into a larger project.

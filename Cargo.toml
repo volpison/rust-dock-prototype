@@ -8,6 +8,8 @@ description = "Prototype: Photoshop-style detachable panels as real OS windows, 
 name = "dock"
 path = "src/lib.rs"
 
-# No dependencies yet: the panel layout model is pure logic.
-# The egui/eframe/egui_dock UI layer arrives in its own PR (see ROADMAP.md).
+# src/layout.rs (the lib) uses no dependencies: it is pure logic.
+# Only the window layer (src/main.rs, src/app.rs, src/panels.rs) uses these.
 [dependencies]
+eframe = "0.37.0"
+egui_dock = "0.22.0"
