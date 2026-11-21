@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 800" width="1400" height="800" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<title>Roadmap: from egui to winit + softbuffer + tiny-skia</title>
+<desc>Seven stages: the finished egui prototype, then a spike, windows and input, a mini toolkit, docking, text and polish, with two go/no-go gates.</desc>
+<rect width="1400" height="800" fill="#FAFAF7"/>
+<text x="28" y="52" font-size="28" font-weight="700" fill="#1F2933">Roadmap: from egui to winit + softbuffer + tiny-skia</text>
+<text x="28" y="82" font-size="15" fill="#52606D">rust-dock-prototype, moving from a ready-made toolkit to our own windowing and drawing stack. Panels are mostly custom-drawn; text fields come later, if viable.</text>
+<rect x="28" y="101" width="16" height="16" rx="4" fill="#E3F4EA" stroke="#2E7D4F" stroke-width="2"/>
+<text x="52" y="114" font-size="13" fill="#52606D">done</text>
+<rect x="118" y="101" width="16" height="16" rx="4" fill="#E4EEFB" stroke="#2F6FB5" stroke-width="2"/>
+<text x="142" y="114" font-size="13" fill="#52606D">next</text>
+<rect x="208" y="101" width="16" height="16" rx="4" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>
+<text x="232" y="114" font-size="13" fill="#52606D">later</text>
+<path d="M298 109 l9 -9 l9 9 l-9 9 z" fill="#FFF3D6" stroke="#B7791F" stroke-width="2"/>
+<text x="324" y="114" font-size="13" fill="#52606D">go / no-go gate (stay on egui if it is not working out)</text>
+<line x1="28" y1="158" x2="1366" y2="158" stroke="#7B8794" stroke-width="3"/>
+<path d="M1372 158 l-12 -7 v14 z" fill="#7B8794"/>
+<line x1="118.0" y1="158" x2="118.0" y2="188" stroke="#2E7D4F" stroke-width="2"/>
+<circle cx="118.0" cy="158" r="7" fill="#2E7D4F"/>
+<rect x="28" y="188" width="180" height="300" rx="12" fill="#E3F4EA" stroke="#2E7D4F" stroke-width="2"/>
+<rect x="40" y="200" width="46" height="24" rx="12" fill="#2E7D4F"/>
+<text x="63.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">NOW</text>
+<text x="40" y="252" font-size="18" font-weight="700" fill="#1F2933">egui prototype</text>
+<text x="40" y="272" font-size="12" fill="#52606D">eframe + egui_dock</text>
+<text x="40" y="304" font-size="13" fill="#1F2933">Real OS windows</text>
+<text x="40" y="326" font-size="13" fill="#1F2933">Drag a tab out</text>
+<text x="40" y="348" font-size="13" fill="#1F2933">Drag a panel back to dock</text>
+<text x="40" y="370" font-size="13" fill="#1F2933">Layout + geometry tested</text>
+<text x="40" y="392" font-size="13" fill="#1F2933">Runs on Windows</text>
+<text x="40" y="474" font-size="12" font-weight="600" fill="#2E7D4F">done</text>
+<line x1="312.0" y1="158" x2="312.0" y2="188" stroke="#2F6FB5" stroke-width="2"/>
+<circle cx="312.0" cy="158" r="7" fill="#2F6FB5"/>
+<rect x="222" y="188" width="180" height="300" rx="12" fill="#E4EEFB" stroke="#2F6FB5" stroke-width="2"/>
+<rect x="234" y="200" width="28" height="24" rx="12" fill="#2F6FB5"/>
+<text x="248.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+<text x="234" y="252" font-size="18" font-weight="700" fill="#1F2933">Spike</text>
+<text x="234" y="272" font-size="12" fill="#52606D">winit + softbuffer + tiny-skia</text>
+<text x="234" y="304" font-size="13" fill="#1F2933">Two windows, one pixel</text>
+<text x="234" y="326" font-size="13" fill="#1F2933">buffer each</text>
+<text x="234" y="348" font-size="13" fill="#1F2933">Borderless + transparent</text>
+<text x="234" y="370" font-size="13" fill="#1F2933">(skin experiment)</text>
+<text x="234" y="392" font-size="13" fill="#1F2933">Draw shapes, measure</text>
+<text x="234" y="414" font-size="13" fill="#1F2933">speed and flicker</text>
+<text x="234" y="474" font-size="12" font-weight="600" fill="#2F6FB5">size S</text>
+<line x1="506.0" y1="158" x2="506.0" y2="188" stroke="#7B8794" stroke-width="2"/>
+<circle cx="506.0" cy="158" r="7" fill="#7B8794"/>
+<rect x="416" y="188" width="180" height="300" rx="12" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>
+<rect x="428" y="200" width="28" height="24" rx="12" fill="#52606D"/>
+<text x="442.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+<text x="428" y="252" font-size="18" font-weight="700" fill="#1F2933">Windows + input</text>
+<text x="428" y="272" font-size="12" fill="#52606D">own event loop</text>
+<text x="428" y="304" font-size="13" fill="#1F2933">Many windows, one loop</text>
+<text x="428" y="326" font-size="13" fill="#1F2933">Pointer drags across</text>
+<text x="428" y="348" font-size="13" fill="#1F2933">windows (experiment</text>
+<text x="428" y="370" font-size="13" fill="#1F2933">findings carry over)</text>
+<text x="428" y="392" font-size="13" fill="#1F2933">Display scaling (DPI)</text>
+<text x="428" y="414" font-size="13" fill="#1F2933">Redraw only changes</text>
+<text x="428" y="474" font-size="12" font-weight="600" fill="#52606D">size M</text>
+<line x1="700.0" y1="158" x2="700.0" y2="188" stroke="#7B8794" stroke-width="2"/>
+<circle cx="700.0" cy="158" r="7" fill="#7B8794"/>
+<rect x="610" y="188" width="180" height="300" rx="12" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>
+<rect x="622" y="200" width="28" height="24" rx="12" fill="#52606D"/>
+<text x="636.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+<text x="622" y="252" font-size="18" font-weight="700" fill="#1F2933">Mini toolkit</text>
+<text x="622" y="272" font-size="12" fill="#52606D">custom-drawn controls</text>
+<text x="622" y="304" font-size="13" fill="#1F2933">Layout + hit-testing</text>
+<text x="622" y="326" font-size="13" fill="#1F2933">Hover / pressed states</text>
+<text x="622" y="348" font-size="13" fill="#1F2933">Buttons, sliders, knobs</text>
+<text x="622" y="370" font-size="13" fill="#1F2933">Skins from images</text>
+<text x="622" y="474" font-size="12" font-weight="600" fill="#52606D">size L</text>
+<line x1="894.0" y1="158" x2="894.0" y2="188" stroke="#7B8794" stroke-width="2"/>
+<circle cx="894.0" cy="158" r="7" fill="#7B8794"/>
+<rect x="804" y="188" width="180" height="300" rx="12" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>
+<rect x="816" y="200" width="28" height="24" rx="12" fill="#52606D"/>
+<text x="830.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+<text x="816" y="252" font-size="18" font-weight="700" fill="#1F2933">Docking</text>
+<text x="816" y="272" font-size="12" fill="#52606D">on the new stack</text>
+<text x="816" y="304" font-size="13" fill="#1F2933">Split tree + tab groups</text>
+<text x="816" y="326" font-size="13" fill="#1F2933">Drop zones on drag</text>
+<text x="816" y="348" font-size="13" fill="#1F2933">Detach / dock back,</text>
+<text x="816" y="370" font-size="13" fill="#1F2933">same rules as today</text>
+<text x="816" y="392" font-size="13" fill="#1F2933">Layout + geometry reused</text>
+<text x="816" y="474" font-size="12" font-weight="600" fill="#52606D">size M</text>
+<line x1="1088.0" y1="158" x2="1088.0" y2="188" stroke="#7B8794" stroke-width="2"/>
+<circle cx="1088.0" cy="158" r="7" fill="#7B8794"/>
+<rect x="998" y="188" width="180" height="300" rx="12" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>
+<rect x="1010" y="200" width="28" height="24" rx="12" fill="#52606D"/>
+<text x="1024.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">5</text>
+<text x="1010" y="252" font-size="18" font-weight="700" fill="#1F2933">Text</text>
+<text x="1010" y="272" font-size="12" fill="#52606D">labels, then fields</text>
+<text x="1010" y="304" font-size="13" fill="#1F2933">Labels first: fonts,</text>
+<text x="1010" y="326" font-size="13" fill="#1F2933">glyphs on tiny-skia</text>
+<text x="1010" y="348" font-size="13" fill="#1F2933">Text fields later,</text>
+<text x="1010" y="370" font-size="13" fill="#1F2933">only if viable:</text>
+<text x="1010" y="392" font-size="13" fill="#1F2933">cursor, selection,</text>
+<text x="1010" y="414" font-size="13" fill="#1F2933">clipboard, IME</text>
+<text x="1010" y="474" font-size="12" font-weight="600" fill="#52606D">size L to XL</text>
+<line x1="1282.0" y1="158" x2="1282.0" y2="188" stroke="#7B8794" stroke-width="2"/>
+<circle cx="1282.0" cy="158" r="7" fill="#7B8794"/>
+<rect x="1192" y="188" width="180" height="300" rx="12" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>
+<rect x="1204" y="200" width="28" height="24" rx="12" fill="#52606D"/>
+<text x="1218.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">6</text>
+<text x="1204" y="252" font-size="18" font-weight="700" fill="#1F2933">Polish</text>
+<text x="1204" y="272" font-size="12" fill="#52606D">ship it</text>
+<text x="1204" y="304" font-size="13" fill="#1F2933">Save layout (versioned)</text>
+<text x="1204" y="326" font-size="13" fill="#1F2933">macOS + Linux (Wayland</text>
+<text x="1204" y="348" font-size="13" fill="#1F2933">limits: no placement)</text>
+<text x="1204" y="370" font-size="13" fill="#1F2933">Accessibility</text>
+<text x="1204" y="392" font-size="13" fill="#1F2933">Packaging</text>
+<text x="1204" y="474" font-size="12" font-weight="600" fill="#52606D">size L</text>
+<rect x="994" y="184" width="188" height="308" rx="15" fill="none" stroke="#7B8794" stroke-width="1.5" stroke-dasharray="5 4"/>
+<path d="M409.0 142 l15 16 l-15 16 l-15 -16 z" fill="#FFF3D6" stroke="#B7791F" stroke-width="2.5"/>
+<text x="409.0" y="163" font-size="14" font-weight="700" fill="#7A4F01" text-anchor="middle">A</text>
+<path d="M797.0 142 l15 16 l-15 16 l-15 -16 z" fill="#FFF3D6" stroke="#B7791F" stroke-width="2.5"/>
+<text x="797.0" y="163" font-size="14" font-weight="700" fill="#7A4F01" text-anchor="middle">B</text>
+<rect x="28" y="522" width="1344" height="92" rx="12" fill="#FFF9E8" stroke="#B7791F" stroke-width="1.5"/>
+<text x="44" y="548" font-size="15" font-weight="700" fill="#7A4F01">Gate A, after the spike</text>
+<text x="44" y="570" font-size="13" fill="#1F2933">Is drawing smooth enough (no flicker on resize, transparency works, redraws are cheap)? If not, stay on egui</text>
+<text x="44" y="588" font-size="13" fill="#1F2933">and skin the windows there (a skinned-window experiment already showed borderless egui windows).</text>
+<text x="740.0" y="548" font-size="15" font-weight="700" fill="#7A4F01">Gate B, after the mini toolkit</text>
+<text x="740.0" y="570" font-size="13" fill="#1F2933">Is building a panel from custom-drawn controls pleasant, or are we rebuilding egui slowly?</text>
+<text x="740.0" y="588" font-size="13" fill="#1F2933">Continue to docking only if it is pleasant.</text>
+<rect x="28" y="636" width="1344" height="56" rx="12" fill="#E3F4EA" stroke="#2E7D4F" stroke-width="2"/>
+<text x="44" y="660" font-size="15" font-weight="700" fill="#1F2933">Carried over unchanged through every stage</text>
+<text x="44" y="680" font-size="13" fill="#1F2933">layout.rs (docked / detached rules) · geometry.rs (drop tests) · their tests · the PR, CI and docs routine</text>
+<text x="28" y="786" font-size="12" fill="#52606D">Sizes are rough relative effort (S small, M medium, L large, XL very large), not a schedule. A plan to refine together.</text>
+</svg>
