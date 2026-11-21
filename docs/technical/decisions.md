@@ -39,3 +39,8 @@
 - **What:** dragging a tab out of the window will detach the panel when the button is released outside the window, placed at the cursor. Details in [the plan](drag-out-plan.md).
 - **Why:** it needs only the pointer position, which winit usually keeps sending during a drag. A window that follows the cursor needs the OS to hand over a drag begun in another window, which is likely to fail on Windows.
 - **Left out:** live tear-off, and dropping a detached window onto a chosen spot in the dock.
+
+## 2026-11-21: The dragged tab is the tab under the pointer when the button goes down
+- **What:** `Viewer::on_tab_button` records the hovered tab each frame; the app keeps the one hovered at the moment the primary button is pressed, and uses it when the button is released outside the window.
+- **Why:** an experiment on Windows showed that `egui_dock` never reports a tab drag through `on_tab_button` (`drag_started` stayed false), while the pointer position and the release do arrive outside the window.
+- **Left out:** asking `egui_dock` which tab is dragged (it does not say), and a live window that follows the cursor.
