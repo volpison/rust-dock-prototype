@@ -113,8 +113,15 @@ impl DockApp {
                 // button is held, so the drop can be tested against the main window.
                 let handle = ui
                     .add(
-                        egui::Label::new("Drag here, then let go over the main window to dock")
-                            .sense(egui::Sense::drag()),
+                        egui::Label::new(
+                            egui::RichText::new(
+                                "Drag here, then let go over the main window to dock",
+                            )
+                            .strong(),
+                        )
+                        // Not selectable: dragging must not select the text.
+                        .selectable(false)
+                        .sense(egui::Sense::drag()),
                     )
                     .on_hover_cursor(egui::CursorIcon::Grab);
                 if handle.drag_stopped() {
