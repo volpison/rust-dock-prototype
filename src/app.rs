@@ -135,7 +135,7 @@ impl TabViewer for Viewer {
     type Tab = PanelId;
 
     fn id(&mut self, tab: &mut PanelId) -> egui::Id {
-        egui::Id::new(*tab)
+        egui::Id::unique(*tab)
     }
 
     fn title(&mut self, tab: &mut PanelId) -> egui::WidgetText {
