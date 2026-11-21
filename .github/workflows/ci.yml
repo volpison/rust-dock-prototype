@@ -28,6 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Formatting
+        run: cargo fmt --check
+
       # Builds the library, the program and the tests, then runs them.
       - name: Tests
         run: cargo test --locked
