@@ -49,3 +49,13 @@
 - **What:** each detached window has a draggable strip. On release, if the pointer is over the main window, the panel is re-docked. The whole main window is the target; the panel goes to the focused area.
 - **Why:** the OS moves a window by its title bar and gives the app little pointer information meanwhile, while a drag started inside the window keeps reporting positions outside it (seen in the Windows experiment). The same screen-position arithmetic as drag-out then decides the drop.
 - **Left out:** dropping onto a particular split or tab group, a highlight while hovering over the main window, and moving the window along with the pointer during the drag (moving it by the title bar stays as before). The strip text is not selectable, so dragging it does not select the words.
+
+## 2026-11-21: Move to winit + softbuffer + tiny-skia in stages, with two go/no-go gates
+- **What:** the route is in [the roadmap](roadmap-winit.svg): a spike, windows and input, a mini toolkit, docking, text, polish. After the spike (Gate A) and after the mini toolkit (Gate B) we decide whether to go on or stay on egui.
+- **Why:** a custom stack means writing a small toolkit, and a gate after each risky stage keeps the cost of a "no" low. The panels are mostly custom-drawn controls, so skipping a general toolkit is plausible; text fields are the expensive part and come last, and only if viable.
+- **Left out:** switching all at once, and starting with text fields. The egui program stays as it is until a gate says otherwise.
+
+## 2026-11-21: The spike lives in this repository, as a separate crate
+- **What:** `spikes/winit/`, with its own `Cargo.toml` and `Cargo.lock`, on `main` through normal pull requests. Plan: [the spike plan](winit-spike-plan.md).
+- **Why:** the spike is small and may end at Gate A, so it should be cheap to delete. A separate crate keeps winit, softbuffer and tiny-skia out of the egui build and its CI. A long-lived branch would drift from `main` (dependencies, CI, docs) and fight the one-topic-per-PR routine; a new repository would copy the pure code too early.
+- **Left out:** a new repository and a long-lived branch for now. Reusing the `dock` library in the spike: depending on the root package would pull in eframe, so the library moves into a Cargo workspace first (stage 2). If the new stack outgrows this repository, it can be split off then.
