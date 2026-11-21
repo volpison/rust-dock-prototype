@@ -24,3 +24,8 @@
 - **What:** detaching uses the tab's context menu. Dragging a tab out of the window is on the roadmap.
 - **Why:** winit gives little pointer information once a drag leaves the window, so drag-out needs its own design.
 - **Left out:** drag-out in this version.
+
+## 2026-11-20: CI on Windows, with the docs check copied from the project template
+- **What:** `.github/workflows/ci.yml` has a docs job (Ubuntu) running `scripts/check-docs.mjs` and its tests, and a Rust job (Windows) running `cargo test --locked`. The script, its tests and the pull request template come unchanged from the `project-template` repository.
+- **Why:** the conventions say CI is the referee and tests run on the platform users really have. The project is built and used on Windows.
+- **Left out:** macOS and Linux jobs (not tried yet; the window libraries may need system packages there), `cargo fmt` and `cargo clippy` (the code is not formatted yet; formatting goes in its own pull request), the version script and release workflow (no release yet).

@@ -5,4 +5,5 @@
 
 ## Technical
 - [Architecture](technical/architecture.md)
+- [Tests](technical/testing.md)
 - [Decisions](technical/decisions.md)

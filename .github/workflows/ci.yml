@@ -1,0 +1,33 @@
+# Runs on every push to main and every pull request.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Script tests (docs check)
+        run: node --test "scripts/*.test.mjs"
+
+      - name: Docs links and index
+        run: node scripts/check-docs.mjs
+
+  # Windows is the platform the maintainer uses. Rust is already installed on the runner.
+  rust:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Builds the library, the program and the tests, then runs them.
+      - name: Tests
+        run: cargo test --locked
