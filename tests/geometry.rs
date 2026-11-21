@@ -1,4 +1,4 @@
-use dock::geometry::{is_outside_window, to_screen, window_origin_under_cursor};
+use dock::geometry::{is_outside_window, is_over_window, to_screen, window_origin_under_cursor};
 
 const SIZE: (f32, f32) = (800.0, 600.0);
 
@@ -39,4 +39,23 @@ fn new_window_is_centred_under_the_cursor() {
         window_origin_under_cursor((500.0, 400.0), 320.0, 15.0),
         (340.0, 385.0)
     );
+}
+
+#[test]
+fn a_screen_point_is_over_a_window_when_inside_its_rectangle() {
+    // Main window from the experiment: top-left (1034, 333), 800 x 600.
+    let origin = (1034.0, 333.0);
+    assert!(is_over_window((1100.0, 400.0), origin, SIZE));
+    assert!(is_over_window((1034.0, 333.0), origin, SIZE));
+    assert!(is_over_window((1834.0, 933.0), origin, SIZE));
+}
+
+#[test]
+fn a_screen_point_is_not_over_a_window_when_beside_it() {
+    let origin = (1034.0, 333.0);
+    assert!(!is_over_window((201.0, 773.0), origin, SIZE));
+    assert!(!is_over_window((1033.0, 500.0), origin, SIZE));
+    assert!(!is_over_window((1500.0, 332.0), origin, SIZE));
+    assert!(!is_over_window((1835.0, 500.0), origin, SIZE));
+    assert!(!is_over_window((1500.0, 934.0), origin, SIZE));
 }

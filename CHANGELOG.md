@@ -5,6 +5,7 @@ All notable changes are listed here. Format: [Keep a Changelog](https://keepacha
 ## [Unreleased]
 
 ### Added
+- Drag a detached panel's strip over the main window and let go to dock it again.
 - Drag a panel's tab out of the window and let go outside it to detach the panel there.
 - A message in the main window when every panel has been detached, instead of a blank window.
 - A window: right-click a panel tab and choose "Detach to window" to move it into its own window. Use "Dock back" or close that window to return it.

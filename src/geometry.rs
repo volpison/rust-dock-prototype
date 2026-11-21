@@ -22,3 +22,17 @@ pub fn window_origin_under_cursor(
 ) -> (f32, f32) {
     (cursor.0 - window_width / 2.0, cursor.1 - title_offset)
 }
+
+/// True when a screen position lies over a window whose top-left corner is at
+/// `window_origin` (on the screen) and which is `window_size` big.
+pub fn is_over_window(
+    screen_point: (f32, f32),
+    window_origin: (f32, f32),
+    window_size: (f32, f32),
+) -> bool {
+    let relative = (
+        screen_point.0 - window_origin.0,
+        screen_point.1 - window_origin.1,
+    );
+    !is_outside_window(relative, window_size, 0.0)
+}

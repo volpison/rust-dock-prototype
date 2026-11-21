@@ -1,6 +1,6 @@
 # Plan: drag a tab out of the window to detach it
 
-Status: step 1 (the experiment) is done and step 2 (drag a tab out to detach) is built. Steps 3 and 4 are not.
+Status: step 1 (the experiment) is done, step 2 (drag a tab out to detach) is built and merged, and step 3 (drag a detached panel back) is built. Step 4 is not.
 
 ## What the experiment found (Windows, 100% scaling, one monitor)
 - While the mouse button is held, pointer positions keep arriving after the cursor leaves the window (down to 833 points left of it), and the release is reported outside the window.

@@ -7,7 +7,10 @@
 You can also **drag the tab out of the window** and let go outside it. The panel opens in its own window where you dropped it. (Let go a little way past the edge: a tiny overshoot counts as still inside.)
 
 ## Put a panel back
-Click **Dock back** in the panel's window, or close that window. The panel returns to the main window.
+Any of these returns the panel to the main window:
+- Click **Dock back** in the panel's window.
+- Close that window.
+- Press on the strip at the top of the panel's window ("Drag here, then let go over the main window to dock"), drag it over the main window and let go.
 
 ## Good to know
 - If every panel is detached, the main window shows a short message. Use **Dock back** in any panel window to bring panels back.

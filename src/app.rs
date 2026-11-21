@@ -1,7 +1,7 @@
 //! The window layer: draws the layout and reports what the user did.
 //! The rules (a panel is docked or detached, never both) live in `dock::layout::Layout`.
 
-use dock::geometry::{is_outside_window, to_screen, window_origin_under_cursor};
+use dock::geometry::{is_outside_window, is_over_window, to_screen, window_origin_under_cursor};
 use dock::layout::{Layout, PanelId};
 use eframe::egui;
 use egui_dock::{DockArea, DockState, NodePath, TabViewer};
@@ -94,6 +94,8 @@ impl DockApp {
     /// Each detached panel is its own OS window (an egui immediate viewport).
     fn show_detached_windows(&mut self, ctx: &egui::Context) {
         let mut to_redock: Vec<PanelId> = Vec::new();
+        // Where the main window is on the screen (called from the main window's frame).
+        let main_rect = ctx.input(|i| i.viewport().inner_rect);
 
         for window in self.layout.detached().to_vec() {
             let id = window.panel;
@@ -106,6 +108,26 @@ impl DockApp {
             }
 
             ctx.show_viewport_immediate(viewport_id, builder, |ui, _class| {
+                // Drag this strip and let go over the main window to dock the panel.
+                // The pointer keeps reporting positions outside this window while the
+                // button is held, so the drop can be tested against the main window.
+                let handle = ui
+                    .add(
+                        egui::Label::new("Drag here, then let go over the main window to dock")
+                            .sense(egui::Sense::drag()),
+                    )
+                    .on_hover_cursor(egui::CursorIcon::Grab);
+                if handle.drag_stopped() {
+                    let (pos, inner) =
+                        ui.input(|i| (i.pointer.latest_pos(), i.viewport().inner_rect));
+                    if let (Some(pos), Some(inner), Some(main)) = (pos, inner, main_rect) {
+                        let cursor = to_screen((inner.min.x, inner.min.y), (pos.x, pos.y));
+                        let origin = (main.min.x, main.min.y);
+                        if is_over_window(cursor, origin, (main.width(), main.height())) {
+                            to_redock.push(id);
+                        }
+                    }
+                }
                 if ui.button("Dock back").clicked() {
                     to_redock.push(id);
                 }
