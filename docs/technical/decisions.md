@@ -59,3 +59,14 @@
 - **What:** `spikes/winit/`, with its own `Cargo.toml` and `Cargo.lock`, on `main` through normal pull requests. Plan: [the spike plan](winit-spike-plan.md).
 - **Why:** the spike is small and may end at Gate A, so it should be cheap to delete. A separate crate keeps winit, softbuffer and tiny-skia out of the egui build and its CI. A long-lived branch would drift from `main` (dependencies, CI, docs) and fight the one-topic-per-PR routine; a new repository would copy the pure code too early.
 - **Left out:** a new repository and a long-lived branch for now. Reusing the `dock` library in the spike: depending on the root package would pull in eframe, so the library moves into a Cargo workspace first (stage 2). If the new stack outgrows this repository, it can be split off then.
+
+## 2026-11-21: Spike versions and how pixels reach the screen
+- **What:** `spikes/winit` pins winit 0.30.13, softbuffer 0.4.8 and tiny-skia 0.12.0. tiny-skia draws into a `Pixmap` (premultiplied RGBA); each frame is copied into softbuffer's `u32` buffer as `0xAARRGGBB`. A new window per panel, one event loop, one softbuffer surface per window.
+- **Why:** the versions are the ones a fresh `cargo add` resolved on the maintainer's machine, and the code was written from their sources. Premultiplied `0xAARRGGBB` is what the earlier skinned-window experiment used for see-through windows; softbuffer 0.4.8 has no alpha setting, so whether it works on each platform is a thing the spike must check.
+- **Left out:** GPU drawing (vello, wgpu), a platform-specific transparent-window path (for example Windows layered windows) until the spike shows it is needed, and text.
+
+## 2026-11-22: Gate A passed on Windows; continue to stage 2
+- **What:** the spike met every check on Windows 10 at 100% scaling: see-through corners, no resize flicker, pointer events outside the window during a drag, smooth moving by a custom strip, and a release-build redraw of about 1 ms for a 320x420 panel (plan threshold: 8 ms). Details in [`spikes/winit/RESULTS.md`](../../spikes/winit/RESULTS.md). Next is stage 2 (windows and input, display scaling), starting by moving the pure code into a Cargo workspace.
+- **Why:** the questions Gate A asked are answered with real numbers, and the cost of going on is low: a "no" at Gate B still leaves the egui program intact.
+- **Left out:** scaling above 100% (untested; stage 2), macOS and Linux (untested; stage 6); debug-build speed (unusable without optimising dependencies, noted in the results); text.
+- **Risk noted:** see-through corners work on Windows but are outside softbuffer's documented pixel format (0RGB), so they are not guaranteed on other platforms or versions.

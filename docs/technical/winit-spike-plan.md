@@ -1,6 +1,6 @@
 # Plan: a spike on winit + softbuffer + tiny-skia
 
-Status: planned, nothing built yet. The whole route is in [the roadmap](roadmap-winit.svg); this page covers stage 1 only.
+Status: the spike is built and was run on Windows. Results: [`spikes/winit/RESULTS.md`](../../spikes/winit/RESULTS.md). Gate A passed on Windows (decision recorded in [decisions](decisions.md), 2026-11-22); stage 2 is next. The whole route is in [the roadmap](roadmap-winit.svg); this page covers stage 1 only.
 
 ## Why
 The larger project may want panels that are mostly custom-drawn controls, on our own windowing and drawing stack instead of egui. Before committing to that, a small program should answer one question: **is drawing our own windows with winit + softbuffer + tiny-skia smooth enough?** If not, we stay on egui and skin the windows there. This is Gate A on the roadmap.
@@ -23,7 +23,7 @@ A small program, no toolkit, no text, no docking:
 4. A drag that starts in one window and ends over the other: do the pointer events keep arriving outside the window while the button is held? (The egui experiment on Windows says yes; this checks winit directly.)
 5. A timer for a full redraw of a typical panel scene.
 
-Versions: winit 0.30 and softbuffer 0.4, as in the skinned-window experiment; tiny-skia's version is chosen when the code is written. Their signatures are read from the crate sources first, as was done for egui (the first egui sketch used the wrong APIs).
+Versions, read from the downloaded crate sources: winit 0.30.13, softbuffer 0.4.8, tiny-skia 0.12.0. The signatures were read from those sources before the code was written, as was done for egui (the first egui sketch used the wrong APIs). One finding: softbuffer 0.4.8 has no setting for transparency (its macOS backend skips the alpha channel), so see-through corners are the riskiest check.
 
 ## Gate A: what counts as "smooth enough"
 The thresholds are a first guess and can change before the spike starts.
@@ -42,7 +42,7 @@ The thresholds are a first guess and can change before the spike starts.
 ## Steps
 1. **This pull request.** The roadmap, this plan and the decisions. Docs only.
 2. **Pull request: the spike**, items 1 to 5 above, with a short results note in this folder. It also adds a CI job that builds the spike on Windows.
-3. **Gate A.** Decide with the results: continue to stage 2, or stay on egui.
+3. **Gate A.** Passed on Windows at 100% scaling: every check met, so we continue to stage 2. See the results page for what was not tested.
 
 ## What is not in this plan
 - Text, text fields and fonts (stage 5).

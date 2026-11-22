@@ -1,0 +1,11 @@
+[package]
+name = "winit-spike"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Versions read from the crate sources (see docs/technical/winit-spike-plan.md).
+[dependencies]
+winit = "0.30.13"
+softbuffer = "0.4.8"
+tiny-skia = "0.12.0"
