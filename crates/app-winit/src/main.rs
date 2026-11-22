@@ -209,6 +209,15 @@ impl ApplicationHandler for App {
                 }
                 self.request_redraw(target);
             }
+            // The window moved to a display with another scale, or the Windows setting changed.
+            // Sizes are worked out from the scale every frame, so only the pointer position
+            // (in the old pixels) is forgotten and the window redrawn.
+            WindowEvent::ScaleFactorChanged { .. } => {
+                if let Some(win) = self.win_mut(target) {
+                    win.cursor = None;
+                }
+                self.request_redraw(target);
+            }
             WindowEvent::CursorLeft { .. } => {
                 if let Some(win) = self.win_mut(target) {
                     win.cursor = None;
