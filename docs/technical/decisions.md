@@ -70,3 +70,8 @@
 - **Why:** the questions Gate A asked are answered with real numbers, and the cost of going on is low: a "no" at Gate B still leaves the egui program intact.
 - **Left out:** scaling above 100% (untested; stage 2), macOS and Linux (untested; stage 6); debug-build speed (unusable without optimising dependencies, noted in the results); text.
 - **Risk noted:** see-through corners work on Windows but are outside softbuffer's documented pixel format (0RGB), so they are not guaranteed on other platforms or versions.
+
+## 2026-11-22: Split into a Cargo workspace before stage 2
+- **What:** `crates/dock` (the pure library), `crates/app-egui` (today's program, same program name) and `crates/app-winit` (new). The spike stays in `spikes/winit`, excluded from the workspace, until `app-winit` absorbs it. Plan: [stage 2](stage2-plan.md).
+- **Why:** both programs need `layout.rs` and `geometry.rs`, and a package that contains an egui program cannot be a dependency of a program without egui. One workspace keeps one copy of the tested rules and one set of CI checks, and `cargo run` still starts the egui program.
+- **Left out:** copying the pure code into a second repository (two copies to keep in step), and a long-lived branch. A new repository is still possible later if the new stack outgrows this one.
