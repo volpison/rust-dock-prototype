@@ -41,11 +41,10 @@ Each is its own pull request with a "Check before merging" list and a "Not verif
 - **Wayland.** Apps cannot place windows or read the global cursor position there. Linux is stage 6; the layout already treats a window position as optional, and the window layer will report what the platform can do.
 - **Debug-build speed.** tiny-skia is about 25 times slower without optimisation. The workspace sets `opt-level = 3` for dependencies in the dev profile.
 
-## Decisions to confirm in the review
-These have defaults, so the plan can go ahead if you agree:
+## Decisions confirmed in the review (2026-11-22)
 1. The crate names and folders above (`crates/dock`, `crates/app-egui`, `crates/app-winit`).
 2. The egui program keeps its program name, so `cargo run` is unchanged.
-3. Scaling is checked by changing the Windows display scale on your one monitor.
+3. Scaling is checked by changing the Windows display scale on the maintainer's one monitor. As a baseline, both existing programs (the egui program and the spike) were run at 150% and looked right; pull request 4 repeats this for `app-winit`.
 
 ## What is not in this plan
 - Controls, hit-testing beyond two rectangles, layout of widgets (stage 3).
