@@ -41,6 +41,10 @@ jobs:
       - name: Tests
         run: cargo test --locked
 
+      # The winit program is not a default member, so it is built and tested on its own.
+      - name: Tests (winit program)
+        run: cargo test --locked -p rust-dock-winit
+
       # The winit spike is its own crate (spikes/winit), so the steps above do not cover it.
       - name: Formatting (winit spike)
         run: cargo fmt --check

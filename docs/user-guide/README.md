@@ -12,6 +12,9 @@ Any of these returns the panel to the main window:
 - Close that window.
 - Press on the strip at the top of the panel's window ("Drag here, then let go over the main window to dock"), drag the pointer over the main window and let go. The panel's window does not move while you drag the strip; use its title bar to move the window.
 
+## The winit version (experimental)
+Run it with `cargo run -p rust-dock-winit`. The main window shows one coloured block per panel. Click the button with the right-pointing arrow to move that panel into its own window. In that window, click the button with the left-pointing arrow, or close the window, to put it back. Dragging a panel out or back is not there yet, and there is no text: panels are told apart by colour and by the window's title.
+
 ## Good to know
 - If every panel is detached, the main window shows a short message. Use **Dock back** in any panel window to bring panels back.
 - Panels cannot be closed or lost: they are always either in the main window or in their own window.

@@ -1,6 +1,6 @@
 # Plan: stage 2, windows and input on winit
 
-Status: planned, nothing built yet. Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
+Status: pull requests 1 (this plan) and 2 (workspace split) are merged; 3 (the `app-winit` skeleton) is being built. Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
 
 ## Goal
 Make the new stack do what the egui program does with windows: several real OS windows from one event loop, panels detached and put back, drag-out, drag-back, correct on scaled displays, and cheap to redraw. Panels stay placeholder drawings. Controls are stage 3, text is stage 5.
@@ -39,7 +39,7 @@ Each is its own pull request with a "Check before merging" list and a "Not verif
 - **Scaling.** egui hid most of this. Mixing physical pixels and points is the likely source of bugs; pull request 4 exists for this, and `geometry` keeps one unit.
 - **Cross-window drags.** Only the pointer position outside the window was checked, not a drop onto another window. Pull request 5 does that.
 - **Wayland.** Apps cannot place windows or read the global cursor position there. Linux is stage 6; the layout already treats a window position as optional, and the window layer will report what the platform can do.
-- **Debug-build speed.** tiny-skia is about 25 times slower without optimisation. The pull request that adds `app-winit` sets `opt-level = 3` for dependencies in the dev profile (the workspace split itself changes no build settings).
+- **Debug-build speed.** tiny-skia is about 25 times slower without optimisation. The workspace sets `opt-level = 3` for dependencies in the dev profile (added with `app-winit`; the repository's own crates stay unoptimised).
 
 ## Decisions confirmed in the review (2026-11-22)
 1. The crate names and folders above (`crates/dock`, `crates/app-egui`, `crates/app-winit`).
