@@ -744,6 +744,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "dock"
+version = "0.1.0"
+
+[[package]]
 name = "document-features"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2742,6 +2746,7 @@ dependencies = [
 name = "rust-dock-prototype"
 version = "0.1.0"
 dependencies = [
+ "dock",
  "eframe",
  "egui_dock",
 ]

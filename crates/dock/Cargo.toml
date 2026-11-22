@@ -1,0 +1,7 @@
+[package]
+name = "dock"
+version = "0.1.0"
+edition = "2021"
+description = "Pure logic for detachable panels: where each panel lives, and screen geometry. No dependencies."
+
+# No [dependencies] on purpose: this crate is pure logic and moves into the larger project unchanged.

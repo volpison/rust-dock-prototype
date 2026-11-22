@@ -1,8 +1,8 @@
 # Roadmap
 
 ## Done
-- Panel layout rules (`src/layout.rs`): each panel is docked or detached, never both, never lost.
-- Window layer (`src/app.rs`, `src/panels.rs`): egui + eframe + egui_dock. Right-click a tab, "Detach to window", and the panel becomes a real OS window; "Dock back" or closing that window puts it back. Dragging a tab out of the window and letting go outside it does the same, placing the new window at the cursor. A detached panel can be dragged back over the main window by its strip. *Compiles and runs on Windows: docking, splitting, detaching and docking back confirmed.*
+- Panel layout rules (`crates/dock/src/layout.rs`): each panel is docked or detached, never both, never lost.
+- Window layer (`crates/app-egui/src/app.rs`, `crates/app-egui/src/panels.rs`): egui + eframe + egui_dock. Right-click a tab, "Detach to window", and the panel becomes a real OS window; "Dock back" or closing that window puts it back. Dragging a tab out of the window and letting go outside it does the same, placing the new window at the cursor. A detached panel can be dragged back over the main window by its strip. *Compiles and runs on Windows: docking, splitting, detaching and docking back confirmed.*
 
 ## Next
 1. Stage 2 of the move to winit + softbuffer + tiny-skia (windows and input): [plan](docs/technical/stage2-plan.md), starting with a Cargo workspace split. The spike is done and Gate A passed on Windows: [results](spikes/winit/RESULTS.md). Route: [roadmap](docs/technical/roadmap-winit.svg).

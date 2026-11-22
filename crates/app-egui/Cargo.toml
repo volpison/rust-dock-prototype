@@ -1,0 +1,11 @@
+[package]
+name = "rust-dock-prototype"
+version = "0.1.0"
+edition = "2021"
+description = "Prototype: Photoshop-style detachable panels as real OS windows, in pure Rust."
+
+# The window layer: all placement rules live in the `dock` crate.
+[dependencies]
+dock = { path = "../dock" }
+eframe = "0.37.0"
+egui_dock = "0.22.0"

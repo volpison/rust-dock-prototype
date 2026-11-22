@@ -1,4 +1,4 @@
-//! Window layer entry point. All placement rules live in the `dock` library (src/layout.rs).
+//! Window layer entry point. All placement rules live in the `dock` library (crates/dock/src/layout.rs).
 
 mod app;
 mod panels;
