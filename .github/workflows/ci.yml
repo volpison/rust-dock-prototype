@@ -29,7 +29,13 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Formatting
-        run: cargo fmt --check
+        run: cargo fmt --all --check
+
+      # crates/dock is pure logic and must stay free of dependencies.
+      - name: dock has no dependencies
+        run: |
+          $deps = cargo tree -p dock --edges normal,build --prefix none | Select-Object -Skip 1
+          if ($deps) { Write-Error "dock has dependencies: $deps"; exit 1 }
 
       # Builds the library, the program and the tests, then runs them.
       - name: Tests

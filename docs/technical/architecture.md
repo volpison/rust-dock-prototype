@@ -2,17 +2,20 @@
 
 Two layers, kept apart:
 
-- **Layout rules** (`src/layout.rs`, in the `dock` library, pure): which panels are docked and which are detached, and where each detached window sits. Data in, data out, no dependencies. Tests in `tests/layout.rs`.
-- **Window layer** (the binary: `src/main.rs`, `src/app.rs`, `src/panels.rs`): egui + eframe + egui_dock. It reads the layout, draws it, and reports what the user did. It holds no rules.
+- **Layout rules** (`crates/dock/src/layout.rs`, in the `dock` crate, pure): which panels are docked and which are detached, and where each detached window sits. Data in, data out, no dependencies. Tests in `crates/dock/tests/layout.rs`.
+- **Window layer** (the egui program, `crates/app-egui`: `src/main.rs`, `src/app.rs`, `src/panels.rs`): egui + eframe + egui_dock. It reads the layout, draws it, and reports what the user did. It holds no rules.
+
+## Crates
+A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/app-egui` (the egui program, which depends on `dock`). `spikes/winit` is a separate crate outside the workspace, with its own `Cargo.lock`. More in [the stage 2 plan](stage2-plan.md).
 
 ## Files
 | File | Reason to change |
 |---|---|
-| `src/layout.rs` | the rules for where panels live |
-| `src/geometry.rs` | screen arithmetic for dropping a tab: outside the window? where on screen? |
-| `src/panels.rs` | which panels exist, their names and content |
-| `src/app.rs` | how the layout is drawn: dock area, detached windows, menus |
-| `src/main.rs` | starting the app |
+| `crates/dock/src/layout.rs` | the rules for where panels live |
+| `crates/dock/src/geometry.rs` | screen arithmetic for dropping a tab: outside the window? where on screen? |
+| `crates/app-egui/src/panels.rs` | which panels exist, their names and content |
+| `crates/app-egui/src/app.rs` | how the layout is drawn: dock area, detached windows, menus |
+| `crates/app-egui/src/main.rs` | starting the app |
 
 ## Rule the layout keeps
 Every panel is in exactly one place: docked or detached. `detach`, `redock` and `set_position` are the only ways to change that, and they reject unknown panels and double moves.

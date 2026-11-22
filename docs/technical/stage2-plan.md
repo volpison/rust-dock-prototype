@@ -39,7 +39,7 @@ Each is its own pull request with a "Check before merging" list and a "Not verif
 - **Scaling.** egui hid most of this. Mixing physical pixels and points is the likely source of bugs; pull request 4 exists for this, and `geometry` keeps one unit.
 - **Cross-window drags.** Only the pointer position outside the window was checked, not a drop onto another window. Pull request 5 does that.
 - **Wayland.** Apps cannot place windows or read the global cursor position there. Linux is stage 6; the layout already treats a window position as optional, and the window layer will report what the platform can do.
-- **Debug-build speed.** tiny-skia is about 25 times slower without optimisation. The workspace sets `opt-level = 3` for dependencies in the dev profile.
+- **Debug-build speed.** tiny-skia is about 25 times slower without optimisation. The pull request that adds `app-winit` sets `opt-level = 3` for dependencies in the dev profile (the workspace split itself changes no build settings).
 
 ## Decisions confirmed in the review (2026-11-22)
 1. The crate names and folders above (`crates/dock`, `crates/app-egui`, `crates/app-winit`).

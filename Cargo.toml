@@ -1,15 +1,8 @@
-[package]
-name = "rust-dock-prototype"
-version = "0.1.0"
-edition = "2021"
-description = "Prototype: Photoshop-style detachable panels as real OS windows, in pure Rust."
-
-[lib]
-name = "dock"
-path = "src/lib.rs"
-
-# src/layout.rs (the lib) uses no dependencies: it is pure logic.
-# Only the window layer (src/main.rs, src/app.rs, src/panels.rs) uses these.
-[dependencies]
-eframe = "0.37.0"
-egui_dock = "0.22.0"
+# Workspace: the pure library (crates/dock) and the egui program (crates/app-egui).
+# `cargo run` and `cargo test` at this level use the default members.
+[workspace]
+resolver = "2"
+members = ["crates/dock", "crates/app-egui"]
+default-members = ["crates/dock", "crates/app-egui"]
+# The winit spike is a separate crate with its own Cargo.lock until it is absorbed.
+exclude = ["spikes/winit"]
