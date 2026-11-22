@@ -5,8 +5,9 @@ Throwaway program that answers the questions of Gate A in [the spike plan](../..
 ## Run it
 ```
 cd spikes/winit
-cargo run
+cargo run --release
 ```
+Use `--release`: tiny-skia without optimisation is about 25 times slower, so a plain `cargo run` makes the timings and the smoothness meaningless.
 Two windows open:
 - **borderless**: no title bar, rounded corners that should show the desktop through, moved by dragging its blue top strip.
 - **plain**: a normal window with the same drawing.

@@ -4,7 +4,7 @@ Run on 2026-11-22. Windows 10, one monitor, 100% display scaling. winit 0.30.13,
 
 | Check | Result |
 |---|---|
-| Transparent corners on Windows | **Works.** A screenshot of the borderless window shows its rounded corners with the terminal behind them. Premultiplied `0xAARRGGBB` through softbuffer is kept by the system, although softbuffer 0.4.8 has no alpha setting. |
+| Transparent corners on Windows | **Works.** A screenshot of the borderless window shows its rounded corners with the terminal behind them. Premultiplied `0xAARRGGBB` through softbuffer is kept by the system. **Caveat:** softbuffer 0.4.8 has no alpha setting, its macOS backend ignores alpha, and its documented pixel format is 0RGB (top byte unused; this was pointed out in review and not re-checked in the source here). So this works on this Windows setup but is not guaranteed by the API: it may differ on other platforms or softbuffer versions. |
 | Resizing without flicker | **Works** to the eye: no black flashes or stale pixels while dragging an edge of the plain window, including maximising. |
 | Pointer events outside the window while a button is held | **Works.** About 25 drags in both windows, out of every side and corner: events kept arriving (negative coordinates and past the far edge), and the release was reported outside, with a correct screen position. Same behaviour as the egui experiment. |
 | Moving a borderless window by its custom strip (`drag_window`) | **Smooth.** The OS takes over the move: no pointer events and no release arrive in our window during it. |
@@ -19,7 +19,7 @@ Run on 2026-11-22. Windows 10, one monitor, 100% display scaling. winit 0.30.13,
 | Redraw while resizing (120x728 up to 949x617) | 0.9 to 2.7 ms | not measured |
 | Redraw of a 1897x1008 window | 4.5 ms | not measured |
 
-The whole frame is redrawn every time (no partial updates yet), so these are worst cases for this scene.
+These are averages over 60 redraws, not maximums: single frames can take longer, and the slowest frame was not measured. The whole frame is redrawn every time (no partial updates yet).
 
 **Debug builds are too slow to judge or to work in.** tiny-skia without optimisation takes 25 times longer. If the project moves to this stack, optimise the dependencies in debug builds (a `[profile.dev.package."*"]` setting with `opt-level = 3`).
 
@@ -30,4 +30,4 @@ The whole frame is redrawn every time (no partial updates yet), so these are wor
 - Text, input fields and anything beyond rounded rectangles.
 
 ## Reading for Gate A
-On Windows at 100% scaling the stack meets every threshold in the plan. The open risks are the untested platforms and display scaling, which stage 2 (windows and input) covers. The decision to go on is the maintainer's.
+On Windows at 100% scaling the stack meets every threshold in the plan. The open risks are display scaling, covered by stage 2 (windows and input), and macOS and Linux, covered by stage 6 (polish); transparency is also not guaranteed by softbuffer's API (see the caveat above). The decision to go on is the maintainer's.

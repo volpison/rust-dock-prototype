@@ -68,4 +68,5 @@
 ## 2026-11-22: Gate A passed on Windows; continue to stage 2
 - **What:** the spike met every check on Windows 10 at 100% scaling: see-through corners, no resize flicker, pointer events outside the window during a drag, smooth moving by a custom strip, and a release-build redraw of about 1 ms for a 320x420 panel (plan threshold: 8 ms). Details in [`spikes/winit/RESULTS.md`](../../spikes/winit/RESULTS.md). Next is stage 2 (windows and input, display scaling), starting by moving the pure code into a Cargo workspace.
 - **Why:** the questions Gate A asked are answered with real numbers, and the cost of going on is low: a "no" at Gate B still leaves the egui program intact.
-- **Left out:** macOS, Linux and scaling above 100% (untested, they are stage 2 and 6 work); debug-build speed (unusable without optimising dependencies, noted in the results); text.
+- **Left out:** scaling above 100% (untested; stage 2), macOS and Linux (untested; stage 6); debug-build speed (unusable without optimising dependencies, noted in the results); text.
+- **Risk noted:** see-through corners work on Windows but are outside softbuffer's documented pixel format (0RGB), so they are not guaranteed on other platforms or versions.
