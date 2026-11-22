@@ -24,7 +24,7 @@ The Node commands need Node 20 or newer. They are run by CI, so you only need th
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request:
 
 - **docs** (Ubuntu): the docs check tests and the docs check itself.
-- **rust** (Windows): `cargo fmt --check`, then `cargo test --locked`, which builds everything and runs the layout tests. Windows is the platform the maintainer uses. macOS and Linux are not tested yet.
+- **rust** (Windows): `cargo fmt --check`, then `cargo test --locked`, which builds everything and runs the layout tests. The same two checks (format, `cargo build --locked`) run on the winit spike in `spikes/winit`, which is a separate crate. Windows is the platform the maintainer uses. macOS and Linux are not tested yet.
 
 CI does not run the program or check lints (`cargo clippy`) yet.
 

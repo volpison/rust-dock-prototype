@@ -34,3 +34,12 @@ jobs:
       # Builds the library, the program and the tests, then runs them.
       - name: Tests
         run: cargo test --locked
+
+      # The winit spike is its own crate (spikes/winit), so the steps above do not cover it.
+      - name: Formatting (winit spike)
+        run: cargo fmt --check
+        working-directory: spikes/winit
+
+      - name: Build (winit spike)
+        run: cargo build --locked
+        working-directory: spikes/winit
