@@ -76,12 +76,11 @@ impl Win {
 /// Turns one tiny-skia pixel (premultiplied red, green, blue, alpha bytes) into the `u32`
 /// softbuffer wants. This is the one place that knows the pixel format, so a platform
 /// that needs a different one only has to change this function.
+///
+/// softbuffer 0.4.8 documents the format as 0RGB: the top byte is unused. All windows here
+/// are opaque, so alpha is dropped. See-through windows will need their own path (pull
+/// request 7 of the stage 2 plan); the spike (`spikes/winit`) put alpha in the top byte.
 fn to_softbuffer(pixel: &[u8]) -> u32 {
-    let (r, g, b, a) = (
-        pixel[0] as u32,
-        pixel[1] as u32,
-        pixel[2] as u32,
-        pixel[3] as u32,
-    );
-    (a << 24) | (r << 16) | (g << 8) | b
+    let (r, g, b) = (pixel[0] as u32, pixel[1] as u32, pixel[2] as u32);
+    (r << 16) | (g << 8) | b
 }
