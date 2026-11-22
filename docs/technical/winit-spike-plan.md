@@ -1,6 +1,6 @@
 # Plan: a spike on winit + softbuffer + tiny-skia
 
-Status: planned, nothing built yet. The whole route is in [the roadmap](roadmap-winit.svg); this page covers stage 1 only.
+Status: the spike program is written (`spikes/winit/`); it has not been run yet, and no results are in. The whole route is in [the roadmap](roadmap-winit.svg); this page covers stage 1 only.
 
 ## Why
 The larger project may want panels that are mostly custom-drawn controls, on our own windowing and drawing stack instead of egui. Before committing to that, a small program should answer one question: **is drawing our own windows with winit + softbuffer + tiny-skia smooth enough?** If not, we stay on egui and skin the windows there. This is Gate A on the roadmap.
@@ -23,7 +23,7 @@ A small program, no toolkit, no text, no docking:
 4. A drag that starts in one window and ends over the other: do the pointer events keep arriving outside the window while the button is held? (The egui experiment on Windows says yes; this checks winit directly.)
 5. A timer for a full redraw of a typical panel scene.
 
-Versions: winit 0.30 and softbuffer 0.4, as in the skinned-window experiment; tiny-skia's version is chosen when the code is written. Their signatures are read from the crate sources first, as was done for egui (the first egui sketch used the wrong APIs).
+Versions, read from the downloaded crate sources: winit 0.30.13, softbuffer 0.4.8, tiny-skia 0.12.0. The signatures were read from those sources before the code was written, as was done for egui (the first egui sketch used the wrong APIs). One finding: softbuffer 0.4.8 has no setting for transparency (its macOS backend skips the alpha channel), so see-through corners are the riskiest check.
 
 ## Gate A: what counts as "smooth enough"
 The thresholds are a first guess and can change before the spike starts.
