@@ -3,7 +3,9 @@
 //! (`main.rs`) both ask this file, so what you see is what you can click.
 //!
 //! Sizes below are in points (what a person would call "pixels at 100% scaling");
-//! every function multiplies them by the window's scale factor.
+//! every function multiplies them by the window's scale factor. At scales like 125% or 150%
+//! that gives fractions of a pixel, so every rectangle is snapped to whole pixels: edges
+//! stay crisp when drawn, and a click is tested against exactly what was drawn.
 
 use dock::geometry::is_over_window;
 use dock::layout::PanelId;
@@ -27,6 +29,19 @@ impl Rect {
     /// True when `point` (relative to the window's top-left corner) is inside the rectangle.
     pub fn contains(&self, point: (f32, f32)) -> bool {
         is_over_window(point, (self.x, self.y), (self.w, self.h))
+    }
+
+    /// The same rectangle with its edges moved to whole pixels. The width and height come
+    /// from the rounded edges, so two rectangles that touched before still touch.
+    pub fn snapped(self) -> Rect {
+        let (x0, y0) = (self.x.round(), self.y.round());
+        let (x1, y1) = ((self.x + self.w).round(), (self.y + self.h).round());
+        Rect {
+            x: x0,
+            y: y0,
+            w: x1 - x0,
+            h: y1 - y0,
+        }
     }
 }
 
@@ -60,8 +75,8 @@ pub fn main_rows(width: f32, scale: f32, docked: &[PanelId]) -> Vec<Row> {
             };
             Row {
                 panel: *panel,
-                area,
-                button,
+                area: area.snapped(),
+                button: button.snapped(),
             }
         })
         .collect()
@@ -90,7 +105,10 @@ pub fn detached_view(width: f32, height: f32, scale: f32) -> DetachedView {
         w: (width - 2.0 * margin).max(0.0),
         h: (height - top - margin).max(0.0),
     };
-    DetachedView { button, content }
+    DetachedView {
+        button: button.snapped(),
+        content: content.snapped(),
+    }
 }
 
 /// The panel whose "detach" button is under `point`, if any.
@@ -191,6 +209,75 @@ mod tests {
         assert!(dock_back_button_at((20.0, 20.0), 320.0, 420.0, 1.0));
         assert!(!dock_back_button_at((200.0, 20.0), 320.0, 420.0, 1.0));
         assert!(!dock_back_button_at((20.0, 300.0), 320.0, 420.0, 1.0));
+    }
+
+    /// Scales a person really meets: 100%, 125%, 150%, 175%, 200%, 250%.
+    const SCALES: [f32; 6] = [1.0, 1.25, 1.5, 1.75, 2.0, 2.5];
+
+    fn is_whole(rect: Rect) -> bool {
+        [rect.x, rect.y, rect.w, rect.h]
+            .iter()
+            .all(|v| *v == v.round())
+    }
+
+    #[test]
+    fn snapping_moves_each_edge_to_a_whole_pixel() {
+        let rect = Rect {
+            x: 0.4,
+            y: 1.6,
+            w: 10.2,
+            h: 4.0,
+        };
+        let snapped = rect.snapped();
+        assert_eq!((snapped.x, snapped.y), (0.0, 2.0));
+        assert_eq!(snapped.x + snapped.w, (0.4f32 + 10.2).round());
+        assert_eq!(snapped.y + snapped.h, (1.6f32 + 4.0).round());
+    }
+
+    #[test]
+    fn at_every_common_scale_all_rectangles_sit_on_whole_pixels() {
+        for scale in SCALES {
+            // Odd widths on purpose.
+            for width in [361.0, 457.0, 800.0] {
+                for row in main_rows(width, scale, &[A, B, PanelId(3)]) {
+                    assert!(is_whole(row.area), "area at {scale}: {:?}", row.area);
+                    assert!(is_whole(row.button), "button at {scale}: {:?}", row.button);
+                }
+                let view = detached_view(width, 421.0, scale);
+                assert!(is_whole(view.button), "button at {scale}");
+                assert!(is_whole(view.content), "content at {scale}");
+            }
+        }
+    }
+
+    #[test]
+    fn at_every_common_scale_rows_do_not_overlap_and_buttons_stay_inside_them() {
+        for scale in SCALES {
+            let rows = main_rows(480.0 * scale, scale, &[A, B, PanelId(3)]);
+            for pair in rows.windows(2) {
+                let (above, below) = (pair[0].area, pair[1].area);
+                assert!(below.y >= above.y + above.h, "overlap at {scale}");
+            }
+            for row in &rows {
+                let (a, b) = (row.area, row.button);
+                assert!(b.x >= a.x && b.x + b.w <= a.x + a.w, "button x at {scale}");
+                assert!(b.y >= a.y && b.y + b.h <= a.y + a.h, "button y at {scale}");
+            }
+        }
+    }
+
+    #[test]
+    fn a_click_is_tested_against_exactly_the_snapped_button() {
+        for scale in SCALES {
+            let width = 480.0 * scale;
+            let button = main_rows(width, scale, &[A])[0].button;
+            let inside = (button.x, button.y);
+            let last_inside = (button.x + button.w, button.y + button.h);
+            let outside = (button.x - 1.0, button.y);
+            assert_eq!(detach_button_at(inside, width, scale, &[A]), Some(A));
+            assert_eq!(detach_button_at(last_inside, width, scale, &[A]), Some(A));
+            assert_eq!(detach_button_at(outside, width, scale, &[A]), None);
+        }
     }
 
     #[test]
