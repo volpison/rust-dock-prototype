@@ -64,3 +64,8 @@
 - **What:** `spikes/winit` pins winit 0.30.13, softbuffer 0.4.8 and tiny-skia 0.12.0. tiny-skia draws into a `Pixmap` (premultiplied RGBA); each frame is copied into softbuffer's `u32` buffer as `0xAARRGGBB`. A new window per panel, one event loop, one softbuffer surface per window.
 - **Why:** the versions are the ones a fresh `cargo add` resolved on the maintainer's machine, and the code was written from their sources. Premultiplied `0xAARRGGBB` is what the earlier skinned-window experiment used for see-through windows; softbuffer 0.4.8 has no alpha setting, so whether it works on each platform is a thing the spike must check.
 - **Left out:** GPU drawing (vello, wgpu), a platform-specific transparent-window path (for example Windows layered windows) until the spike shows it is needed, and text.
+
+## 2026-11-22: Gate A passed on Windows; continue to stage 2
+- **What:** the spike met every check on Windows 10 at 100% scaling: see-through corners, no resize flicker, pointer events outside the window during a drag, smooth moving by a custom strip, and a release-build redraw of about 1 ms for a 320x420 panel (plan threshold: 8 ms). Details in [`spikes/winit/RESULTS.md`](../../spikes/winit/RESULTS.md). Next is stage 2 (windows and input, display scaling), starting by moving the pure code into a Cargo workspace.
+- **Why:** the questions Gate A asked are answered with real numbers, and the cost of going on is low: a "no" at Gate B still leaves the egui program intact.
+- **Left out:** macOS, Linux and scaling above 100% (untested, they are stage 2 and 6 work); debug-build speed (unusable without optimising dependencies, noted in the results); text.

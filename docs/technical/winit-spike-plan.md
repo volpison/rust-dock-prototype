@@ -1,6 +1,6 @@
 # Plan: a spike on winit + softbuffer + tiny-skia
 
-Status: the spike program is written (`spikes/winit/`); it has not been run yet, and no results are in. The whole route is in [the roadmap](roadmap-winit.svg); this page covers stage 1 only.
+Status: the spike is built and was run on Windows. Results: [`spikes/winit/RESULTS.md`](../../spikes/winit/RESULTS.md). Gate A is waiting for the maintainer's decision. The whole route is in [the roadmap](roadmap-winit.svg); this page covers stage 1 only.
 
 ## Why
 The larger project may want panels that are mostly custom-drawn controls, on our own windowing and drawing stack instead of egui. Before committing to that, a small program should answer one question: **is drawing our own windows with winit + softbuffer + tiny-skia smooth enough?** If not, we stay on egui and skin the windows there. This is Gate A on the roadmap.
@@ -42,7 +42,7 @@ The thresholds are a first guess and can change before the spike starts.
 ## Steps
 1. **This pull request.** The roadmap, this plan and the decisions. Docs only.
 2. **Pull request: the spike**, items 1 to 5 above, with a short results note in this folder. It also adds a CI job that builds the spike on Windows.
-3. **Gate A.** Decide with the results: continue to stage 2, or stay on egui.
+3. **Gate A.** Decide with the results: continue to stage 2, or stay on egui. On Windows at 100% scaling every check passed; see the results page for what was not tested.
 
 ## What is not in this plan
 - Text, text fields and fonts (stage 5).
