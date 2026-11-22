@@ -6,7 +6,7 @@ Two layers, kept apart:
 - **Window layer** (the egui program, `crates/app-egui`: `src/main.rs`, `src/app.rs`, `src/panels.rs`): egui + eframe + egui_dock. It reads the layout, draws it, and reports what the user did. It holds no rules.
 
 ## Crates
-A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/app-egui` (the egui program, which depends on `dock`). `spikes/winit` is a separate crate outside the workspace, with its own `Cargo.lock`. More in [the stage 2 plan](stage2-plan.md).
+A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/app-egui` (the egui program, which depends on `dock`), and `crates/app-winit` (the same panels on winit + softbuffer + tiny-skia, started in [stage 2](stage2-plan.md); run with `cargo run -p rust-dock-winit`). `spikes/winit` is a separate crate outside the workspace, with its own `Cargo.lock`. More in [the stage 2 plan](stage2-plan.md).
 
 ## Files
 | File | Reason to change |
@@ -16,6 +16,11 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/ap
 | `crates/app-egui/src/panels.rs` | which panels exist, their names and content |
 | `crates/app-egui/src/app.rs` | how the layout is drawn: dock area, detached windows, menus |
 | `crates/app-egui/src/main.rs` | starting the app |
+| `crates/app-winit/src/ui.rs` | where things are in a window (pure: rows, buttons, hit-testing) |
+| `crates/app-winit/src/render.rs` | drawing them with tiny-skia |
+| `crates/app-winit/src/win.rs` | one OS window: softbuffer surface, canvas, pixel hand-over |
+| `crates/app-winit/src/panels.rs` | the panels' ids, names and colours |
+| `crates/app-winit/src/main.rs` | the event loop: windows, clicks, detach and dock back |
 
 ## Rule the layout keeps
 Every panel is in exactly one place: docked or detached. `detach`, `redock` and `set_position` are the only ways to change that, and they reject unknown panels and double moves.
@@ -29,5 +34,8 @@ Every panel is in exactly one place: docked or detached. `detach`, `redock` and 
 - Re-dock: `Layout::redock`, then the tab is pushed back into the `DockState`. Closing the detached window does this.
 - Tabs cannot be closed (`is_closeable` is false) and cannot become in-window floating panels (`allowed_in_windows` is false), because either would put a panel somewhere the layout does not know about.
 
+## The winit program
+Same rules, no egui. One event loop; the main window shows one coloured block per docked panel with a "detach" button (arrow pointing right), and each detached panel is its own OS window with a "dock back" button (arrow pointing left). `Layout` is still the source of truth: a click calls `Layout::detach` or `Layout::redock` and the windows follow. Closing a detached window re-docks its panel; closing the main window quits. There is no text (stage 5), so panels are told apart by colour and by the window title. Windows are placed by the OS; drag-out and drag-back, scaling changes and partial redraws come in the next pull requests of the stage 2 plan. `ui.rs` is pure so what is drawn and what is clickable come from the same numbers, and it is unit-tested.
+
 ## Pinned versions
-`eframe` 0.37.0 and `egui_dock` 0.22.0 (which needs `egui` 0.37). Both change their APIs often; check the signatures in `docs/technical/decisions.md` before upgrading.
+`eframe` 0.37.0 and `egui_dock` 0.22.0 (which needs `egui` 0.37) for the egui program; `winit` 0.30.13, `softbuffer` 0.4.8 and `tiny-skia` 0.12.0 for the winit program. Both change their APIs often; check the signatures in `docs/technical/decisions.md` before upgrading.

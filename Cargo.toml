@@ -1,8 +1,14 @@
-# Workspace: the pure library (crates/dock) and the egui program (crates/app-egui).
-# `cargo run` and `cargo test` at this level use the default members.
+# Workspace: the pure library (crates/dock), the egui program (crates/app-egui) and the
+# winit program (crates/app-winit). `cargo run` and `cargo test` at this level use the
+# default members, which leave out app-winit: run it with `cargo run -p rust-dock-winit`.
 [workspace]
 resolver = "2"
-members = ["crates/dock", "crates/app-egui"]
+members = ["crates/dock", "crates/app-egui", "crates/app-winit"]
 default-members = ["crates/dock", "crates/app-egui"]
 # The winit spike is a separate crate with its own Cargo.lock until it is absorbed.
 exclude = ["spikes/winit"]
+
+# tiny-skia is about 25 times slower without optimisation (see spikes/winit/RESULTS.md),
+# so dependencies are optimised even in debug builds. The crates of this repository are not.
+[profile.dev.package."*"]
+opt-level = 3

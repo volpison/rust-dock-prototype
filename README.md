@@ -20,6 +20,15 @@ cargo run
 
 To run the tests: `cargo test`.
 
+### The winit version (experimental)
+The same panels without egui, on winit + softbuffer + tiny-skia (see the [roadmap](ROADMAP.md)):
+
+```
+cargo run -p rust-dock-winit
+```
+
+It has no text yet: click the button with the arrow pointing right to detach a panel, and the one pointing left in its window to dock it back.
+
 ## More
 - What is planned, and what this is not: [ROADMAP.md](ROADMAP.md)
 - How to use it: [User guide](docs/user-guide/README.md)
