@@ -1,0 +1,8 @@
+[package]
+name = "toolkit"
+version = "0.1.0"
+edition = "2021"
+description = "Pure logic for custom-drawn controls: pointer state, buttons, toggles. No dependencies."
+
+# No [dependencies] on purpose: like `dock`, this crate is pure logic, tested without a
+# window, and moves into the larger project unchanged. Drawing and windows live elsewhere.

@@ -37,7 +37,13 @@ jobs:
           $deps = cargo tree -p dock --edges normal,build --prefix none | Select-Object -Skip 1
           if ($deps) { Write-Error "dock has dependencies: $deps"; exit 1 }
 
-      # Builds the library, the program and the tests, then runs them.
+      # crates/toolkit is pure logic too.
+      - name: toolkit has no dependencies
+        run: |
+          $deps = cargo tree -p toolkit --edges normal,build --prefix none | Select-Object -Skip 1
+          if ($deps) { Write-Error "toolkit has dependencies: $deps"; exit 1 }
+
+      # Builds the libraries, the program and the tests, then runs them.
       - name: Tests
         run: cargo test --locked
 

@@ -6,7 +6,7 @@ Two layers, kept apart:
 - **Window layer** (the egui program, `crates/app-egui`: `src/main.rs`, `src/app.rs`, `src/panels.rs`): egui + eframe + egui_dock. It reads the layout, draws it, and reports what the user did. It holds no rules.
 
 ## Crates
-A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/app-egui` (the egui program, which depends on `dock`), and `crates/app-winit` (the same panels on winit + softbuffer + tiny-skia, started in [stage 2](stage2-plan.md); run with `cargo run -p rust-dock-winit`). `spikes/winit` is a separate crate outside the workspace, with its own `Cargo.lock`. More in [the stage 2 plan](stage2-plan.md).
+A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/toolkit` (pure logic for custom-drawn controls, no dependencies; started in [stage 3](stage3-plan.md)), `crates/app-egui` (the egui program, which depends on `dock`), and `crates/app-winit` (the same panels on winit + softbuffer + tiny-skia, started in [stage 2](stage2-plan.md); run with `cargo run -p rust-dock-winit`). `spikes/winit` is a separate crate outside the workspace, with its own `Cargo.lock`. More in [the stage 2 plan](stage2-plan.md).
 
 ## Files
 | File | Reason to change |
@@ -14,6 +14,8 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/ap
 | `crates/dock/src/layout.rs` | the rules for where panels live |
 | `crates/dock/src/geometry.rs` | screen arithmetic for dropping a tab: outside the window? where on screen? |
 | `crates/dock/src/drag.rs` | what letting go of a dragged panel does: detach where, dock back or nothing |
+| `crates/toolkit/src/input.rs` | pointer state for a window: hover, button held (capture), click or not |
+| `crates/toolkit/src/widgets.rs` | controls as state machines: button, toggle, how they look |
 | `crates/app-egui/src/panels.rs` | which panels exist, their names and content |
 | `crates/app-egui/src/app.rs` | how the layout is drawn: dock area, detached windows, menus |
 | `crates/app-egui/src/main.rs` | starting the app |
