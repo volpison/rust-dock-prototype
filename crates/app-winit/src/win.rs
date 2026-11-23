@@ -40,6 +40,13 @@ impl Win {
         )
     }
 
+    /// The window's top-left corner (inside the frame) on the screen, in pixels. `None` when
+    /// the platform does not say (Wayland).
+    pub fn screen_origin(&self) -> Option<(f32, f32)> {
+        let position = self.window.inner_position().ok()?;
+        Some((position.x as f32, position.y as f32))
+    }
+
     /// Draws a frame with `draw(canvas, scale_factor)` and shows it.
     pub fn present(&mut self, draw: impl FnOnce(&mut Pixmap, f32)) {
         let size = self.window.inner_size();
