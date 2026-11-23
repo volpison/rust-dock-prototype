@@ -56,8 +56,22 @@ pub fn draw_detached(pm: &mut Pixmap, scale: f32, panel: PanelId, hover: bool, d
 }
 
 /// The ghost that follows the pointer during a drag: the panel's colour in a light frame.
-pub fn draw_ghost(pm: &mut Pixmap, scale: f32, panel: PanelId) {
-    pm.fill(Color::from_rgba8(ARROW[0], ARROW[1], ARROW[2], 255));
+/// When the window is see-through (`see_through`) the corners are rounded and show what is
+/// behind; otherwise the window is a plain rectangle, which looks right everywhere.
+pub fn draw_ghost(pm: &mut Pixmap, scale: f32, panel: PanelId, see_through: bool) {
+    let (w, h) = (pm.width() as f32, pm.height() as f32);
+    if see_through {
+        pm.fill(Color::TRANSPARENT);
+        let whole = Rect {
+            x: 0.0,
+            y: 0.0,
+            w,
+            h,
+        };
+        rounded_rect(pm, whole, 10.0 * scale, ARROW);
+    } else {
+        pm.fill(Color::from_rgba8(ARROW[0], ARROW[1], ARROW[2], 255));
+    }
     let inset = (3.0 * scale).round();
     let inner = Rect {
         x: inset,

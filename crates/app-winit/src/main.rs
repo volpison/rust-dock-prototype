@@ -6,6 +6,7 @@
 //! what it does (right = detach, left = dock back), and the window title names the panel.
 
 mod panels;
+mod pixel;
 mod render;
 mod ui;
 mod win;
@@ -132,7 +133,8 @@ impl App {
                     return;
                 };
                 let panel = *panel;
-                win.present(|canvas, scale| render::draw_ghost(canvas, scale, panel));
+                let see_through = win.see_through();
+                win.present(|canvas, scale| render::draw_ghost(canvas, scale, panel, see_through));
             }
         }
     }
@@ -242,6 +244,7 @@ impl App {
         let attributes = WindowAttributes::default()
             .with_title("")
             .with_decorations(false)
+            .with_transparent(true)
             .with_resizable(false)
             .with_active(false)
             .with_window_level(WindowLevel::AlwaysOnTop)

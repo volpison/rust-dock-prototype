@@ -5,6 +5,7 @@ All notable changes are listed here. Format: [Keep a Changelog](https://keepacha
 ## [Unreleased]
 
 ### Added
+- Winit version: the drag ghost has rounded, see-through corners on Windows. Elsewhere, or with `DOCK_OPAQUE=1`, it is a plain rectangle. `DOCK_TRACE=1` also prints each window's size.
 - Winit version: moving the pointer only redraws when a button's highlight changes, and then only the buttons involved are handed to the system. `DOCK_TRACE=1` prints each frame's time.
 - Winit version: while a panel is dragged outside its window, a small ghost window in the panel's colour follows the pointer (not on Wayland, where the program cannot read the window position).
 - Winit version: drag a panel's block (it dims while dragged) out of the main window and let go outside it to detach it there; drag a detached panel's block over the main window and let go to dock it again. Where the platform gives no window position (Wayland) a panel dragged out opens where the system puts it, and dragging back is not available.

@@ -1,6 +1,6 @@
 # Plan: stage 2, windows and input on winit
 
-Status: pull requests 1 (this plan), 2 (workspace split), 3 (the `app-winit` skeleton) and 4 (display scaling) are merged; 5 (drag-out and drag-back, with feedback) and 5b (the drag ghost) are merged; 6 (redraw only what changed) is being built. Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
+Status: pull requests 1 (this plan), 2 (workspace split), 3 (the `app-winit` skeleton) and 4 (display scaling) are merged; 5 (drag-out and drag-back, with feedback) and 5b (the drag ghost) and 6 (redraw only what changed) are merged; 7 (transparency safety) is being built. Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
 
 ## Goal
 Make the new stack do what the egui program does with windows: several real OS windows from one event loop, panels detached and put back, drag-out, drag-back, correct on scaled displays, and cheap to redraw. Panels stay placeholder drawings. Controls are stage 3, text is stage 5.
@@ -31,7 +31,7 @@ spikes/winit/       stays as it is, excluded from the workspace, deleted once ap
 5. **Drag-out and drag-back.** The same flow as the egui program, on winit's pointer events, which the spike showed keep arriving outside the window while a button is held. The drag state (pressed on a panel, released outside or over a window) is pure logic, so it is in `dock` (`drag.rs`) with tests.
 5b. **Drag ghost.** While a panel is dragged outside its window, a small borderless always-on-top window follows the pointer. It takes no input (`set_cursor_hittest(false)`), so the drag stays with the window it started in. Windows first; no ghost where the window position is unknown (Wayland).
 6. **Redraw only what changed.** Redraw just the window that needs it, and give softbuffer the changed area (`present_with_damage`). Measured against the spike's numbers: run with `DOCK_TRACE=1` and the program prints how long each frame took and how much of the window was shown. Pointer moves that do not change which button is highlighted redraw nothing.
-7. **Transparency safety.** See the risk below.
+7. **Transparency safety.** See the risk below. Done as: `pixel.rs` (pure, tested) decides what a see-through window gets; only Windows is allowed it; elsewhere, and with `DOCK_OPAQUE=1`, the window is opaque and the drawing adapts. The drag ghost is the first user (rounded corners).
 
 Each is its own pull request with a "Check before merging" list and a "Not verified here" section.
 
