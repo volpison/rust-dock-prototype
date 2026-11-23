@@ -16,6 +16,7 @@ The Node commands need Node 20 or newer. They are run by CI, so you only need th
 
 ## What the tests cover
 
+- **Toolkit** (`crates/toolkit`): `crates/toolkit/tests/input.rs` and `widgets.rs`. Hover follows the control under the pointer; a button held down is captured until it is let go, even outside the control or window; letting go over the same control is a click, elsewhere is not; other controls are not hovered while one is held; a second press is ignored; every call says whether a look changed, so the window redraws only then; buttons and toggles ignore clicks when disabled. All pure, no window.
 - **Layout rules** (`crates/dock/src/layout.rs`): `crates/dock/tests/layout.rs`. A panel is docked or detached, never both and never lost; unknown panels and double moves are refused. These are pure, so they are fast and need no window.
 - **Drag logic** (`crates/dock/src/drag.rs`): `crates/dock/tests/drag.rs`. Letting go inside, just past the edge and well outside; where the new window is placed; a detached panel is docked back only when let go over the main window; nothing happens when a window position is unknown.
 - **Screen geometry** (`crates/dock/src/geometry.rs`): `crates/dock/tests/geometry.rs`. Outside-the-window test with and without a margin, "is this screen point over that window?", window-to-screen conversion (with numbers from a real run), and where a dropped window is placed.
@@ -28,7 +29,7 @@ The Node commands need Node 20 or newer. They are run by CI, so you only need th
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request:
 
 - **docs** (Ubuntu): the docs check tests and the docs check itself.
-- **rust** (Windows): `cargo fmt --all --check`, a check that `crates/dock` has no dependencies, then `cargo test --locked`, which builds the default members and runs the layout tests, then `cargo test --locked -p rust-dock-winit` for the winit program. The same two checks (format, `cargo build --locked`) run on the winit spike in `spikes/winit`, which is a separate crate. Windows is the platform the maintainer uses. macOS and Linux are not tested yet.
+- **rust** (Windows): `cargo fmt --all --check`, checks that `crates/dock` and `crates/toolkit` have no dependencies, then `cargo test --locked`, which builds the default members and runs the layout tests, then `cargo test --locked -p rust-dock-winit` for the winit program. The same two checks (format, `cargo build --locked`) run on the winit spike in `spikes/winit`, which is a separate crate. Windows is the platform the maintainer uses. macOS and Linux are not tested yet.
 
 CI does not run the program or check lints (`cargo clippy`) yet.
 
