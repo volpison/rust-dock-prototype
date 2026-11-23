@@ -11,12 +11,15 @@ mod ui;
 mod win;
 
 use dock::drag::{DragTracker, DropAction, Release, Source};
+use dock::geometry::{is_outside_window, to_screen, window_origin_under_cursor};
 use dock::layout::{Layout, PanelId};
 use winit::application::ApplicationHandler;
-use winit::dpi::{LogicalSize, PhysicalPosition};
+use winit::dpi::{LogicalSize, PhysicalPosition, PhysicalSize};
 use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{CursorIcon, WindowAttributes, WindowId};
+#[cfg(windows)]
+use winit::platform::windows::WindowAttributesExtWindows;
+use winit::window::{CursorIcon, WindowAttributes, WindowId, WindowLevel};
 
 use win::Win;
 
@@ -29,6 +32,9 @@ const DETACHED_SIZE: [f64; 2] = [320.0, 420.0];
 const DRAG_MARGIN: f64 = 8.0;
 const TITLE_OFFSET: f64 = 15.0;
 
+/// The ghost that follows the pointer while a panel is dragged outside its window (points).
+const GHOST_SIZE: [f64; 2] = [150.0, 90.0];
+
 const MAIN_TITLE: &str = "Dock prototype (winit)";
 const MAIN_TITLE_EMPTY: &str = "Dock prototype (winit): all panels are in their own windows";
 
@@ -37,6 +43,8 @@ const MAIN_TITLE_EMPTY: &str = "Dock prototype (winit): all panels are in their 
 enum Target {
     Main,
     Detached(PanelId),
+    /// The small window that follows the pointer during a drag. It takes no input.
+    Ghost,
 }
 
 struct App {
@@ -46,6 +54,8 @@ struct App {
     detached: Vec<(PanelId, Win)>,
     /// Which panel the left button is down on, if any.
     drag: DragTracker,
+    /// Follows the pointer while a panel is dragged outside its window.
+    ghost: Option<(PanelId, Win)>,
 }
 
 impl App {
@@ -55,12 +65,20 @@ impl App {
             main: None,
             detached: Vec::new(),
             drag: DragTracker::new(),
+            ghost: None,
         }
     }
 
     fn target_of(&self, id: WindowId) -> Option<Target> {
         if self.main.as_ref().is_some_and(|w| w.window.id() == id) {
             return Some(Target::Main);
+        }
+        if self
+            .ghost
+            .as_ref()
+            .is_some_and(|(_, w)| w.window.id() == id)
+        {
+            return Some(Target::Ghost);
         }
         self.detached
             .iter()
@@ -71,6 +89,7 @@ impl App {
     fn win_mut(&mut self, target: Target) -> Option<&mut Win> {
         match target {
             Target::Main => self.main.as_mut(),
+            Target::Ghost => self.ghost.as_mut().map(|(_, w)| w),
             Target::Detached(panel) => self
                 .detached
                 .iter_mut()
@@ -107,6 +126,13 @@ impl App {
                     render::draw_detached(canvas, scale, panel, hover, dragging);
                 });
             }
+            Target::Ghost => {
+                let Some((panel, win)) = self.ghost.as_mut() else {
+                    return;
+                };
+                let panel = *panel;
+                win.present(|canvas, scale| render::draw_ghost(canvas, scale, panel));
+            }
         }
     }
 
@@ -122,7 +148,59 @@ impl App {
                     win.window.request_redraw();
                 }
             }
+            Target::Ghost => {
+                if let Some((_, win)) = &self.ghost {
+                    win.window.request_redraw();
+                }
+            }
         }
+    }
+
+    /// Keep the ghost under the pointer while a panel is dragged outside its window, and
+    /// remove it when the pointer is back inside or there is no drag. It needs the window's
+    /// screen position, so there is no ghost where the platform does not give one (Wayland).
+    fn update_ghost(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        let Some(panel) = self.drag.dragging() else {
+            self.ghost = None;
+            return;
+        };
+        let Some(win) = self.win_mut(target) else {
+            return;
+        };
+        let (Some(pointer), Some(origin)) = (win.cursor, win.screen_origin()) else {
+            return;
+        };
+        let (width, height, scale) = win.metrics();
+        if !is_outside_window(pointer, (width, height), DRAG_MARGIN as f32 * scale) {
+            self.ghost = None;
+            return;
+        }
+        let size = (GHOST_SIZE[0] as f32 * scale, GHOST_SIZE[1] as f32 * scale);
+        // The pointer sits in the middle of the ghost.
+        let (x, y) = window_origin_under_cursor(to_screen(origin, pointer), size.0, size.1 / 2.0);
+        let position = PhysicalPosition::new(x.round() as i32, y.round() as i32);
+        if let Some((_, ghost)) = &self.ghost {
+            ghost.window.set_outer_position(position);
+            return;
+        }
+        let attributes = WindowAttributes::default()
+            .with_title("")
+            .with_decorations(false)
+            .with_resizable(false)
+            .with_active(false)
+            .with_window_level(WindowLevel::AlwaysOnTop)
+            .with_inner_size(PhysicalSize::new(
+                size.0.round() as u32,
+                size.1.round() as u32,
+            ))
+            .with_position(position);
+        #[cfg(windows)]
+        let attributes = attributes.with_skip_taskbar(true);
+        let ghost = Win::new(event_loop, attributes);
+        // The ghost must never take the pointer: the drag belongs to the window it started in.
+        let _ = ghost.window.set_cursor_hittest(false);
+        ghost.window.request_redraw();
+        self.ghost = Some((panel, ghost));
     }
 
     /// Move a docked panel into its own window, at `position` (screen pixels) or, with
@@ -155,6 +233,7 @@ impl App {
         }
         // The window the drag started in is going away.
         self.drag.cancel();
+        self.ghost = None;
         self.detached.retain(|(p, _)| *p != panel);
         self.after_layout_change();
     }
@@ -204,6 +283,7 @@ impl App {
                     self.drag.press(panel, Source::Main);
                 }
             }
+            Target::Ghost => {}
             Target::Detached(panel) => {
                 let Some(win) = self.win_mut(target) else {
                     return;
@@ -224,6 +304,7 @@ impl App {
     /// The left button was let go in `target`. The pointer keeps being reported outside the
     /// window while the button is held, so `cursor` is where the drag ended.
     fn release(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        self.ghost = None;
         self.finish_drag(event_loop, target);
         // Back to the normal pointer and block (the window may be gone by now).
         self.set_cursor_icon(target, CursorIcon::Default);
@@ -283,6 +364,7 @@ impl ApplicationHandler for App {
         match event {
             WindowEvent::CloseRequested => match target {
                 Target::Main => event_loop.exit(),
+                Target::Ghost => {}
                 // Closing a detached window puts its panel back in the main window.
                 Target::Detached(panel) => self.redock(panel),
             },
@@ -293,6 +375,7 @@ impl ApplicationHandler for App {
                     win.cursor = Some((position.x as f32, position.y as f32));
                 }
                 self.request_redraw(target);
+                self.update_ghost(event_loop, target);
             }
             // The window moved to a display with another scale, or the Windows setting changed.
             // Sizes are worked out from the scale every frame, so only the pointer position

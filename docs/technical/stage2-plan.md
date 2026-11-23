@@ -1,6 +1,6 @@
 # Plan: stage 2, windows and input on winit
 
-Status: pull requests 1 (this plan), 2 (workspace split), 3 (the `app-winit` skeleton) and 4 (display scaling) are merged; 5 (drag-out and drag-back) is being built. Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
+Status: pull requests 1 (this plan), 2 (workspace split), 3 (the `app-winit` skeleton) and 4 (display scaling) are merged; 5 (drag-out and drag-back, with feedback) is merged; the drag ghost (a small window that follows the pointer) is being built as 5b. Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
 
 ## Goal
 Make the new stack do what the egui program does with windows: several real OS windows from one event loop, panels detached and put back, drag-out, drag-back, correct on scaled displays, and cheap to redraw. Panels stay placeholder drawings. Controls are stage 3, text is stage 5.
@@ -29,6 +29,7 @@ spikes/winit/       stays as it is, excluded from the workspace, deleted once ap
 3. **`app-winit` skeleton.** One event loop, one window per panel (the main window and detached ones), a window manager keyed by `PanelId`, the layout from `dock`. A minimal drawn "Detach" and "Dock back" rectangle per panel, with a tiny hit-test, so the program can be used before stage 3 has real controls.
 4. **Display scaling.** Pointer and window sizes in physical pixels, scale-factor changes while the program runs, and `geometry` fed with the right units. Checked by changing Windows' display scale (125%, 150%) on the maintainer's one monitor. The skeleton already read the size and scale every frame, so this came down to two things: snap every rectangle to whole pixels (crisp edges at 125% and 150%, and clicks tested against what was drawn), and handle the scale-change event. Units for `geometry`: physical pixels everywhere in `app-winit`, with any margin multiplied by the scale (that comes with drag-out, pull request 5).
 5. **Drag-out and drag-back.** The same flow as the egui program, on winit's pointer events, which the spike showed keep arriving outside the window while a button is held. The drag state (pressed on a panel, released outside or over a window) is pure logic, so it is in `dock` (`drag.rs`) with tests.
+5b. **Drag ghost.** While a panel is dragged outside its window, a small borderless always-on-top window follows the pointer. It takes no input (`set_cursor_hittest(false)`), so the drag stays with the window it started in. Windows first; no ghost where the window position is unknown (Wayland).
 6. **Redraw only what changed.** Redraw just the window that needs it, and give softbuffer the changed area (`present_with_damage`). Measured against the spike's numbers.
 7. **Transparency safety.** See the risk below.
 
