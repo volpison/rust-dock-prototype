@@ -16,7 +16,7 @@ use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalPosition};
 use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{WindowAttributes, WindowId};
+use winit::window::{CursorIcon, WindowAttributes, WindowId};
 
 use win::Win;
 
@@ -83,6 +83,7 @@ impl App {
         match target {
             Target::Main => {
                 let docked = self.layout.docked().to_vec();
+                let dragging = self.drag.dragging();
                 let Some(win) = self.main.as_mut() else {
                     return;
                 };
@@ -91,10 +92,11 @@ impl App {
                     let hover = cursor.and_then(|point| {
                         ui::detach_button_at(point, canvas.width() as f32, scale, &docked)
                     });
-                    render::draw_main(canvas, scale, &docked, hover);
+                    render::draw_main(canvas, scale, &docked, hover, dragging);
                 });
             }
             Target::Detached(panel) => {
+                let dragging = self.drag.dragging() == Some(panel);
                 let Some(win) = self.win_mut(target) else {
                     return;
                 };
@@ -102,7 +104,7 @@ impl App {
                 win.present(|canvas, scale| {
                     let (w, h) = (canvas.width() as f32, canvas.height() as f32);
                     let hover = cursor.is_some_and(|p| ui::dock_back_button_at(p, w, h, scale));
-                    render::draw_detached(canvas, scale, panel, hover);
+                    render::draw_detached(canvas, scale, panel, hover, dragging);
                 });
             }
         }
@@ -171,6 +173,21 @@ impl App {
 
     /// The left button went down in `target`: a button acts at once, a block starts a drag.
     fn press(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        self.press_inner(event_loop, target);
+        // A drag has started: dim the block and show a grabbing pointer.
+        if self.drag.dragging().is_some() {
+            self.set_cursor_icon(target, CursorIcon::Grabbing);
+            self.request_redraw(target);
+        }
+    }
+
+    fn set_cursor_icon(&mut self, target: Target, icon: CursorIcon) {
+        if let Some(win) = self.win_mut(target) {
+            win.window.set_cursor(icon);
+        }
+    }
+
+    fn press_inner(&mut self, event_loop: &ActiveEventLoop, target: Target) {
         match target {
             Target::Main => {
                 let Some(win) = &self.main else {
@@ -207,6 +224,13 @@ impl App {
     /// The left button was let go in `target`. The pointer keeps being reported outside the
     /// window while the button is held, so `cursor` is where the drag ended.
     fn release(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        self.finish_drag(event_loop, target);
+        // Back to the normal pointer and block (the window may be gone by now).
+        self.set_cursor_icon(target, CursorIcon::Default);
+        self.request_redraw(target);
+    }
+
+    fn finish_drag(&mut self, event_loop: &ActiveEventLoop, target: Target) {
         let main_window = self
             .main
             .as_ref()

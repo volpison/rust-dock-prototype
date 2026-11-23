@@ -14,8 +14,15 @@ const BUTTON_HOVER: [u8; 4] = [70, 76, 92, 255];
 const ARROW: [u8; 4] = [240, 240, 240, 255];
 
 /// The main window: one block per docked panel, each with a "detach" button.
-/// `hover` is the panel whose button is under the pointer.
-pub fn draw_main(pm: &mut Pixmap, scale: f32, docked: &[PanelId], hover: Option<PanelId>) {
+/// `hover` is the panel whose button is under the pointer; `dragging` is the panel being
+/// dragged, whose block is drawn dimmed.
+pub fn draw_main(
+    pm: &mut Pixmap,
+    scale: f32,
+    docked: &[PanelId],
+    hover: Option<PanelId>,
+    dragging: Option<PanelId>,
+) {
     pm.fill(Color::from_rgba8(
         BACKGROUND[0],
         BACKGROUND[1],
@@ -23,7 +30,8 @@ pub fn draw_main(pm: &mut Pixmap, scale: f32, docked: &[PanelId], hover: Option<
         BACKGROUND[3],
     ));
     for row in ui::main_rows(pm.width() as f32, scale, docked) {
-        rounded_rect(pm, row.area, 10.0 * scale, panels::color(row.panel));
+        let fill = block_color(row.panel, dragging == Some(row.panel));
+        rounded_rect(pm, row.area, 10.0 * scale, fill);
         button(
             pm,
             row.button,
@@ -34,8 +42,8 @@ pub fn draw_main(pm: &mut Pixmap, scale: f32, docked: &[PanelId], hover: Option<
     }
 }
 
-/// A detached window: a "dock back" button and the panel's block.
-pub fn draw_detached(pm: &mut Pixmap, scale: f32, panel: PanelId, hover: bool) {
+/// A detached window: a "dock back" button and the panel's block (dimmed while `dragging`).
+pub fn draw_detached(pm: &mut Pixmap, scale: f32, panel: PanelId, hover: bool, dragging: bool) {
     pm.fill(Color::from_rgba8(
         BACKGROUND[0],
         BACKGROUND[1],
@@ -43,8 +51,23 @@ pub fn draw_detached(pm: &mut Pixmap, scale: f32, panel: PanelId, hover: bool) {
         BACKGROUND[3],
     ));
     let view = ui::detached_view(pm.width() as f32, pm.height() as f32, scale);
-    rounded_rect(pm, view.content, 10.0 * scale, panels::color(panel));
+    rounded_rect(pm, view.content, 10.0 * scale, block_color(panel, dragging));
     button(pm, view.button, scale, hover, Arrow::Left);
+}
+
+/// The panel's colour, or that colour half way to the background while it is dragged.
+fn block_color(panel: PanelId, dragging: bool) -> [u8; 4] {
+    let color = panels::color(panel);
+    if !dragging {
+        return color;
+    }
+    let mix = |c: u8, b: u8| ((c as u16 + b as u16) / 2) as u8;
+    [
+        mix(color[0], BACKGROUND[0]),
+        mix(color[1], BACKGROUND[1]),
+        mix(color[2], BACKGROUND[2]),
+        255,
+    ]
 }
 
 enum Arrow {

@@ -5,7 +5,7 @@ All notable changes are listed here. Format: [Keep a Changelog](https://keepacha
 ## [Unreleased]
 
 ### Added
-- Winit version: drag a panel's block out of the main window and let go outside it to detach it there; drag a detached panel's block over the main window and let go to dock it again. Where the platform gives no window position (Wayland) a panel dragged out opens where the system puts it, and dragging back is not available.
+- Winit version: drag a panel's block (it dims while dragged) out of the main window and let go outside it to detach it there; drag a detached panel's block over the main window and let go to dock it again. Where the platform gives no window position (Wayland) a panel dragged out opens where the system puts it, and dragging back is not available.
 - Drag a detached panel's strip over the main window and let go to dock it again.
 - Drag a panel's tab out of the window and let go outside it to detach the panel there.
 - A message in the main window when every panel has been detached, instead of a blank window.
