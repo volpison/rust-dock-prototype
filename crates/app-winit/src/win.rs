@@ -8,6 +8,7 @@ use softbuffer::{Context, Surface};
 use std::time::Instant;
 use tiny_skia::Pixmap;
 
+use crate::pixel;
 use crate::ui::Rect;
 use winit::event_loop::ActiveEventLoop;
 use winit::window::{Window, WindowAttributes};
@@ -22,12 +23,22 @@ pub struct Win {
     full: bool,
     /// The part that changed since the last frame, when only part did.
     damage: Option<Rect>,
+    /// Pixels carry alpha and the window really is see-through (see `pixel.rs`).
+    see_through: bool,
     /// Print how long each frame took (set `DOCK_TRACE=1`).
     trace: bool,
 }
 
 impl Win {
     pub fn new(event_loop: &ActiveEventLoop, attributes: WindowAttributes) -> Self {
+        // A window may ask for see-through (`with_transparent`); it only gets it where that
+        // has been seen to work, otherwise it is opaque and the drawing adapts (`see_through()`).
+        let see_through = attributes.transparent
+            && pixel::see_through_supported(
+                cfg!(windows),
+                std::env::var_os("DOCK_OPAQUE").is_some(),
+            );
+        let attributes = attributes.with_transparent(see_through);
         let window = Rc::new(event_loop.create_window(attributes).expect("create window"));
         let context = Context::new(window.clone()).expect("softbuffer context");
         let surface = Surface::new(&context, window.clone()).expect("softbuffer surface");
@@ -39,7 +50,14 @@ impl Win {
             full: true,
             damage: None,
             trace: std::env::var_os("DOCK_TRACE").is_some(),
+            see_through,
         }
+    }
+
+    /// True when this window is see-through: draw transparent pixels where it should show
+    /// what is behind it. False: it is opaque, so paint those pixels with a colour.
+    pub fn see_through(&self) -> bool {
+        self.see_through
     }
 
     /// The window's size in pixels and its scale factor.
@@ -104,8 +122,9 @@ impl Win {
         let Ok(mut buffer) = self.surface.buffer_mut() else {
             return;
         };
+        let see_through = self.see_through;
         for (dst, src) in buffer.iter_mut().zip(pixmap.data().chunks_exact(4)) {
-            *dst = to_softbuffer(src);
+            *dst = pixel::pack(src, see_through);
         }
         self.window.pre_present_notify();
         let part = damage.and_then(|rect| rect.to_pixels(size.width, size.height));
@@ -128,8 +147,10 @@ impl Win {
         let _ = shown;
         if self.trace {
             eprintln!(
-                "frame {:.2} ms, {}",
+                "frame {:.2} ms, window {}x{}, {}",
                 started.elapsed().as_secs_f64() * 1000.0,
+                size.width,
+                size.height,
                 match part {
                     Some((_, _, w, h)) => format!("changed part {w}x{h}"),
                     None => "whole window".to_string(),
@@ -137,16 +158,4 @@ impl Win {
             );
         }
     }
-}
-
-/// Turns one tiny-skia pixel (premultiplied red, green, blue, alpha bytes) into the `u32`
-/// softbuffer wants. This is the one place that knows the pixel format, so a platform
-/// that needs a different one only has to change this function.
-///
-/// softbuffer 0.4.8 documents the format as 0RGB: the top byte is unused. All windows here
-/// are opaque, so alpha is dropped. See-through windows will need their own path (pull
-/// request 7 of the stage 2 plan); the spike (`spikes/winit`) put alpha in the top byte.
-fn to_softbuffer(pixel: &[u8]) -> u32 {
-    let (r, g, b) = (pixel[0] as u32, pixel[1] as u32, pixel[2] as u32);
-    (r << 16) | (g << 8) | b
 }

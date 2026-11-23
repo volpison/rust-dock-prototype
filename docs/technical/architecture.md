@@ -19,7 +19,8 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/ap
 | `crates/app-egui/src/main.rs` | starting the app |
 | `crates/app-winit/src/ui.rs` | where things are in a window (pure: rows, buttons, hit-testing) |
 | `crates/app-winit/src/render.rs` | drawing them with tiny-skia |
-| `crates/app-winit/src/win.rs` | one OS window: softbuffer surface, canvas, pixel hand-over |
+| `crates/app-winit/src/win.rs` | one OS window: softbuffer surface, canvas, changed-area presenting |
+| `crates/app-winit/src/pixel.rs` | the pixel hand-over to softbuffer, and where see-through windows are allowed (pure) |
 | `crates/app-winit/src/panels.rs` | the panels' ids, names and colours |
 | `crates/app-winit/src/main.rs` | the event loop: windows, clicks, drags, detach and dock back |
 
