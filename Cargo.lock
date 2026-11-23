@@ -2819,6 +2819,7 @@ dependencies = [
  "dock",
  "softbuffer",
  "tiny-skia 0.12.0",
+ "toolkit",
  "winit",
 ]
 

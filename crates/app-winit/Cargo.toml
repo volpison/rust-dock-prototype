@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2021"
 description = "Prototype: the same detachable panels on winit + softbuffer + tiny-skia, without egui."
 
-# The window layer of the winit stack: all placement rules live in the `dock` crate.
+# The window layer of the winit stack: placement rules live in the `dock` crate, layout and
+# control logic in the `toolkit` crate.
 # Versions are the ones the spike was written against (see spikes/winit/RESULTS.md).
 [dependencies]
 dock = { path = "../dock" }
+toolkit = { path = "../toolkit" }
 winit = "0.30.13"
 softbuffer = "0.4.8"
 tiny-skia = "0.12.0"
