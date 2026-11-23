@@ -65,7 +65,7 @@
 <text x="622" y="304" font-size="13" fill="#1F2933">Layout + hit-testing</text>
 <text x="622" y="326" font-size="13" fill="#1F2933">Hover / pressed states</text>
 <text x="622" y="348" font-size="13" fill="#1F2933">Buttons, sliders, knobs</text>
-<text x="622" y="370" font-size="13" fill="#1F2933">Skins from images</text>
+<text x="622" y="370" font-size="13" fill="#1F2933">7-segment numbers</text>
 <text x="622" y="474" font-size="12" font-weight="600" fill="#2F6FB5">size L</text>
 <line x1="894.0" y1="158" x2="894.0" y2="188" stroke="#7B8794" stroke-width="2"/>
 <circle cx="894.0" cy="158" r="7" fill="#7B8794"/>
@@ -105,7 +105,8 @@
 <text x="1204" y="326" font-size="13" fill="#1F2933">macOS + Linux (Wayland</text>
 <text x="1204" y="348" font-size="13" fill="#1F2933">limits: no placement)</text>
 <text x="1204" y="370" font-size="13" fill="#1F2933">Accessibility</text>
-<text x="1204" y="392" font-size="13" fill="#1F2933">Packaging</text>
+<text x="1204" y="392" font-size="13" fill="#1F2933">Skins from images</text>
+<text x="1204" y="414" font-size="13" fill="#1F2933">Packaging</text>
 <text x="1204" y="474" font-size="12" font-weight="600" fill="#52606D">size L</text>
 <rect x="994" y="184" width="188" height="308" rx="15" fill="none" stroke="#7B8794" stroke-width="1.5" stroke-dasharray="5 4"/>
 <path d="M409.0 142 l15 16 l-15 16 l-15 -16 z" fill="#FFF3D6" stroke="#B7791F" stroke-width="2.5"/>
