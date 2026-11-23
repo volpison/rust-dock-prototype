@@ -15,11 +15,13 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/to
 | `crates/dock/src/geometry.rs` | screen arithmetic for dropping a tab: outside the window? where on screen? |
 | `crates/dock/src/drag.rs` | what letting go of a dragged panel does: detach where, dock back or nothing |
 | `crates/toolkit/src/input.rs` | pointer state for a window: hover, button held (capture), click or not |
+| `crates/toolkit/src/geometry.rs` | `Rect`: contains, union, snapping to whole pixels, the changed-area pixels |
+| `crates/toolkit/src/layout.rs` | rows and columns in points: gaps, insets, fixed and filling items, scaled and snapped |
 | `crates/toolkit/src/widgets.rs` | controls as state machines: button, toggle, how they look |
 | `crates/app-egui/src/panels.rs` | which panels exist, their names and content |
 | `crates/app-egui/src/app.rs` | how the layout is drawn: dock area, detached windows, menus |
 | `crates/app-egui/src/main.rs` | starting the app |
-| `crates/app-winit/src/ui.rs` | where things are in a window (pure: rows, buttons, hit-testing) |
+| `crates/app-winit/src/ui.rs` | where things are in a window (pure: rows, buttons, hit-testing), built with the toolkit's layout |
 | `crates/app-winit/src/render.rs` | drawing them with tiny-skia |
 | `crates/app-winit/src/win.rs` | one OS window: softbuffer surface, canvas, changed-area presenting |
 | `crates/app-winit/src/pixel.rs` | the pixel hand-over to softbuffer, and where see-through windows are allowed (pure) |

@@ -7,70 +7,16 @@
 //! that gives fractions of a pixel, so every rectangle is snapped to whole pixels: edges
 //! stay crisp when drawn, and a click is tested against exactly what was drawn.
 
-use dock::geometry::is_over_window;
 use dock::layout::PanelId;
+use toolkit::layout::{Cross, Insets, Item, Size, Stack};
+
+pub use toolkit::geometry::Rect;
 
 const MARGIN: f32 = 12.0;
 const ROW_HEIGHT: f32 = 72.0;
 const ROW_GAP: f32 = 10.0;
 const BUTTON_WIDTH: f32 = 96.0;
 const BUTTON_HEIGHT: f32 = 44.0;
-
-/// A rectangle: top-left corner, width and height.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Rect {
-    pub x: f32,
-    pub y: f32,
-    pub w: f32,
-    pub h: f32,
-}
-
-impl Rect {
-    /// True when `point` (relative to the window's top-left corner) is inside the rectangle.
-    pub fn contains(&self, point: (f32, f32)) -> bool {
-        is_over_window(point, (self.x, self.y), (self.w, self.h))
-    }
-
-    /// The smallest rectangle that holds both.
-    pub fn union(self, other: Rect) -> Rect {
-        let (x0, y0) = (self.x.min(other.x), self.y.min(other.y));
-        let x1 = (self.x + self.w).max(other.x + other.w);
-        let y1 = (self.y + self.h).max(other.y + other.h);
-        Rect {
-            x: x0,
-            y: y0,
-            w: x1 - x0,
-            h: y1 - y0,
-        }
-    }
-
-    /// The rectangle as whole pixels `(x, y, width, height)` inside a window of
-    /// `width` x `height` pixels, grown by one pixel on each side (anti-aliased edges) and
-    /// cut to the window. `None` when nothing of it is inside the window.
-    pub fn to_pixels(self, width: u32, height: u32) -> Option<(u32, u32, u32, u32)> {
-        let x0 = (self.x.floor() - 1.0).max(0.0);
-        let y0 = (self.y.floor() - 1.0).max(0.0);
-        let x1 = ((self.x + self.w).ceil() + 1.0).min(width as f32);
-        let y1 = ((self.y + self.h).ceil() + 1.0).min(height as f32);
-        if x1 <= x0 || y1 <= y0 {
-            return None;
-        }
-        Some((x0 as u32, y0 as u32, (x1 - x0) as u32, (y1 - y0) as u32))
-    }
-
-    /// The same rectangle with its edges moved to whole pixels. The width and height come
-    /// from the rounded edges, so two rectangles that touched before still touch.
-    pub fn snapped(self) -> Rect {
-        let (x0, y0) = (self.x.round(), self.y.round());
-        let (x1, y1) = ((self.x + self.w).round(), (self.y + self.h).round());
-        Rect {
-            x: x0,
-            y: y0,
-            w: x1 - x0,
-            h: y1 - y0,
-        }
-    }
-}
 
 /// One docked panel in the main window: its block and its "detach" button.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -82,29 +28,34 @@ pub struct Row {
 
 /// The docked panels, one row each, from the top. `width` is the window's width in pixels.
 pub fn main_rows(width: f32, scale: f32, docked: &[PanelId]) -> Vec<Row> {
-    let (margin, row_h, gap) = (MARGIN * scale, ROW_HEIGHT * scale, ROW_GAP * scale);
-    let (button_w, button_h) = (BUTTON_WIDTH * scale, BUTTON_HEIGHT * scale);
+    let count = docked.len();
+    let height =
+        (2.0 * MARGIN + count as f32 * ROW_HEIGHT + count.saturating_sub(1) as f32 * ROW_GAP)
+            * scale;
+    let areas = Stack::column()
+        .gap(ROW_GAP)
+        .insets(Insets::all(MARGIN))
+        .layout(
+            Rect::new(0.0, 0.0, width, height),
+            scale,
+            &vec![Item::stretch(Size::Fixed(ROW_HEIGHT)); count],
+        );
+    // In each row the button is at the right end, MARGIN from the edge, centred vertically.
+    let inside_row = Stack::row().insets(Insets {
+        right: MARGIN,
+        ..Insets::default()
+    });
+    let row_items = [
+        Item::stretch(Size::Fill(1.0)),
+        Item::new(Size::Fixed(BUTTON_WIDTH), Cross::Center(BUTTON_HEIGHT)),
+    ];
     docked
         .iter()
-        .enumerate()
-        .map(|(i, panel)| {
-            let area = Rect {
-                x: margin,
-                y: margin + i as f32 * (row_h + gap),
-                w: (width - 2.0 * margin).max(0.0),
-                h: row_h,
-            };
-            let button = Rect {
-                x: area.x + area.w - button_w - margin,
-                y: area.y + (row_h - button_h) / 2.0,
-                w: button_w,
-                h: button_h,
-            };
-            Row {
-                panel: *panel,
-                area: area.snapped(),
-                button: button.snapped(),
-            }
+        .zip(areas)
+        .map(|(panel, area)| Row {
+            panel: *panel,
+            area,
+            button: inside_row.layout(area, scale, &row_items)[1],
         })
         .collect()
 }
@@ -117,24 +68,20 @@ pub struct DetachedView {
 }
 
 pub fn detached_view(width: f32, height: f32, scale: f32) -> DetachedView {
-    let (margin, button_w, button_h) =
-        (MARGIN * scale, BUTTON_WIDTH * scale, BUTTON_HEIGHT * scale);
-    let button = Rect {
-        x: margin,
-        y: margin,
-        w: button_w,
-        h: button_h,
-    };
-    let top = 2.0 * margin + button_h;
-    let content = Rect {
-        x: margin,
-        y: top,
-        w: (width - 2.0 * margin).max(0.0),
-        h: (height - top - margin).max(0.0),
-    };
+    let rects = Stack::column()
+        .gap(MARGIN)
+        .insets(Insets::all(MARGIN))
+        .layout(
+            Rect::new(0.0, 0.0, width, height),
+            scale,
+            &[
+                Item::new(Size::Fixed(BUTTON_HEIGHT), Cross::Start(BUTTON_WIDTH)),
+                Item::stretch(Size::Fill(1.0)),
+            ],
+        );
     DetachedView {
-        button: button.snapped(),
-        content: content.snapped(),
+        button: rects[0],
+        content: rects[1],
     }
 }
 
@@ -279,20 +226,6 @@ mod tests {
     }
 
     #[test]
-    fn snapping_moves_each_edge_to_a_whole_pixel() {
-        let rect = Rect {
-            x: 0.4,
-            y: 1.6,
-            w: 10.2,
-            h: 4.0,
-        };
-        let snapped = rect.snapped();
-        assert_eq!((snapped.x, snapped.y), (0.0, 2.0));
-        assert_eq!(snapped.x + snapped.w, (0.4f32 + 10.2).round());
-        assert_eq!(snapped.y + snapped.h, (1.6f32 + 4.0).round());
-    }
-
-    #[test]
     fn at_every_common_scale_all_rectangles_sit_on_whole_pixels() {
         for scale in SCALES {
             // Odd widths on purpose.
@@ -366,40 +299,6 @@ mod tests {
         assert!(content_at((100.0, 200.0), 320.0, 420.0, 1.0));
         assert!(!content_at((20.0, 20.0), 320.0, 420.0, 1.0));
         assert!(!content_at((2.0, 200.0), 320.0, 420.0, 1.0));
-    }
-
-    fn rect(x: f32, y: f32, w: f32, h: f32) -> Rect {
-        Rect { x, y, w, h }
-    }
-
-    #[test]
-    fn the_union_holds_both_rectangles() {
-        let u = rect(10.0, 10.0, 20.0, 20.0).union(rect(50.0, 5.0, 10.0, 10.0));
-        assert_eq!(u, rect(10.0, 5.0, 50.0, 25.0));
-        let a = rect(1.0, 2.0, 3.0, 4.0);
-        assert_eq!(a.union(a), a);
-    }
-
-    #[test]
-    fn damage_pixels_grow_by_one_and_stay_inside_the_window() {
-        assert_eq!(
-            rect(10.0, 10.0, 20.0, 20.0).to_pixels(100, 100),
-            Some((9, 9, 22, 22))
-        );
-        assert_eq!(
-            rect(0.0, 0.0, 20.0, 20.0).to_pixels(100, 100),
-            Some((0, 0, 21, 21))
-        );
-        assert_eq!(
-            rect(90.0, 90.0, 20.0, 20.0).to_pixels(100, 100),
-            Some((89, 89, 11, 11))
-        );
-    }
-
-    #[test]
-    fn damage_outside_the_window_is_nothing() {
-        assert_eq!(rect(200.0, 10.0, 20.0, 20.0).to_pixels(100, 100), None);
-        assert_eq!(rect(10.0, 10.0, 0.0, 0.0).to_pixels(0, 0), None);
     }
 
     #[test]
