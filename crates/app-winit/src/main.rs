@@ -10,18 +10,24 @@ mod render;
 mod ui;
 mod win;
 
+use dock::drag::{DragTracker, DropAction, Release, Source};
 use dock::layout::{Layout, PanelId};
 use winit::application::ApplicationHandler;
-use winit::dpi::LogicalSize;
+use winit::dpi::{LogicalSize, PhysicalPosition};
 use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::window::{WindowAttributes, WindowId};
+use winit::window::{CursorIcon, WindowAttributes, WindowId};
 
 use win::Win;
 
 /// Sizes of the windows, in points.
 const MAIN_SIZE: [f64; 2] = [360.0, 280.0];
 const DETACHED_SIZE: [f64; 2] = [320.0, 420.0];
+
+/// Drag-out: how far outside its window the pointer must be (points), and how far below the
+/// new window's top edge the pointer lands (points). Same values as the egui program.
+const DRAG_MARGIN: f64 = 8.0;
+const TITLE_OFFSET: f64 = 15.0;
 
 const MAIN_TITLE: &str = "Dock prototype (winit)";
 const MAIN_TITLE_EMPTY: &str = "Dock prototype (winit): all panels are in their own windows";
@@ -38,6 +44,8 @@ struct App {
     layout: Layout,
     main: Option<Win>,
     detached: Vec<(PanelId, Win)>,
+    /// Which panel the left button is down on, if any.
+    drag: DragTracker,
 }
 
 impl App {
@@ -46,6 +54,7 @@ impl App {
             layout: Layout::new(panels::ALL),
             main: None,
             detached: Vec::new(),
+            drag: DragTracker::new(),
         }
     }
 
@@ -74,6 +83,7 @@ impl App {
         match target {
             Target::Main => {
                 let docked = self.layout.docked().to_vec();
+                let dragging = self.drag.dragging();
                 let Some(win) = self.main.as_mut() else {
                     return;
                 };
@@ -82,10 +92,11 @@ impl App {
                     let hover = cursor.and_then(|point| {
                         ui::detach_button_at(point, canvas.width() as f32, scale, &docked)
                     });
-                    render::draw_main(canvas, scale, &docked, hover);
+                    render::draw_main(canvas, scale, &docked, hover, dragging);
                 });
             }
             Target::Detached(panel) => {
+                let dragging = self.drag.dragging() == Some(panel);
                 let Some(win) = self.win_mut(target) else {
                     return;
                 };
@@ -93,7 +104,7 @@ impl App {
                 win.present(|canvas, scale| {
                     let (w, h) = (canvas.width() as f32, canvas.height() as f32);
                     let hover = cursor.is_some_and(|p| ui::dock_back_button_at(p, w, h, scale));
-                    render::draw_detached(canvas, scale, panel, hover);
+                    render::draw_detached(canvas, scale, panel, hover, dragging);
                 });
             }
         }
@@ -114,14 +125,24 @@ impl App {
         }
     }
 
-    /// Move a docked panel into its own window. The OS decides where the window goes.
-    fn detach(&mut self, event_loop: &ActiveEventLoop, panel: PanelId) {
-        if self.layout.detach(panel, None).is_err() {
+    /// Move a docked panel into its own window, at `position` (screen pixels) or, with
+    /// `None`, where the OS decides.
+    fn detach(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        panel: PanelId,
+        position: Option<(f32, f32)>,
+    ) {
+        if self.layout.detach(panel, position).is_err() {
             return;
         }
-        let attributes = WindowAttributes::default()
+        let mut attributes = WindowAttributes::default()
             .with_title(panels::title(panel))
             .with_inner_size(LogicalSize::new(DETACHED_SIZE[0], DETACHED_SIZE[1]));
+        if let Some((x, y)) = position {
+            attributes =
+                attributes.with_position(PhysicalPosition::new(x.round() as i32, y.round() as i32));
+        }
         self.detached
             .push((panel, Win::new(event_loop, attributes)));
         self.after_layout_change();
@@ -132,6 +153,8 @@ impl App {
         if self.layout.redock(panel).is_err() {
             return;
         }
+        // The window the drag started in is going away.
+        self.drag.cancel();
         self.detached.retain(|(p, _)| *p != panel);
         self.after_layout_change();
     }
@@ -148,7 +171,23 @@ impl App {
         }
     }
 
-    fn click(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+    /// The left button went down in `target`: a button acts at once, a block starts a drag.
+    fn press(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        self.press_inner(event_loop, target);
+        // A drag has started: dim the block and show a grabbing pointer.
+        if self.drag.dragging().is_some() {
+            self.set_cursor_icon(target, CursorIcon::Grabbing);
+            self.request_redraw(target);
+        }
+    }
+
+    fn set_cursor_icon(&mut self, target: Target, icon: CursorIcon) {
+        if let Some(win) = self.win_mut(target) {
+            win.window.set_cursor(icon);
+        }
+    }
+
+    fn press_inner(&mut self, event_loop: &ActiveEventLoop, target: Target) {
         match target {
             Target::Main => {
                 let Some(win) = &self.main else {
@@ -158,9 +197,11 @@ impl App {
                     return;
                 };
                 let (width, _, scale) = win.metrics();
-                let hit = ui::detach_button_at(cursor, width, scale, self.layout.docked());
-                if let Some(panel) = hit {
-                    self.detach(event_loop, panel);
+                let docked = self.layout.docked();
+                if let Some(panel) = ui::detach_button_at(cursor, width, scale, docked) {
+                    self.detach(event_loop, panel, None);
+                } else if let Some(panel) = ui::block_at(cursor, width, scale, docked) {
+                    self.drag.press(panel, Source::Main);
                 }
             }
             Target::Detached(panel) => {
@@ -173,8 +214,52 @@ impl App {
                 let (width, height, scale) = win.metrics();
                 if ui::dock_back_button_at(cursor, width, height, scale) {
                     self.redock(panel);
+                } else if ui::content_at(cursor, width, height, scale) {
+                    self.drag.press(panel, Source::Detached);
                 }
             }
+        }
+    }
+
+    /// The left button was let go in `target`. The pointer keeps being reported outside the
+    /// window while the button is held, so `cursor` is where the drag ended.
+    fn release(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        self.finish_drag(event_loop, target);
+        // Back to the normal pointer and block (the window may be gone by now).
+        self.set_cursor_icon(target, CursorIcon::Default);
+        self.request_redraw(target);
+    }
+
+    fn finish_drag(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        let main_window = self
+            .main
+            .as_ref()
+            .and_then(|w| w.screen_origin().map(|o| (o, w.metrics())))
+            .map(|(origin, (w, h, _))| (origin, (w, h)));
+        let Some(win) = self.win_mut(target) else {
+            self.drag.cancel();
+            return;
+        };
+        let Some(pointer) = win.cursor else {
+            self.drag.cancel();
+            return;
+        };
+        let (width, height, scale) = win.metrics();
+        let release = Release {
+            pointer,
+            window_size: (width, height),
+            margin: DRAG_MARGIN as f32 * scale,
+            window_origin: win.screen_origin(),
+            main_window,
+            new_window_width: DETACHED_SIZE[0] as f32 * scale,
+            title_offset: TITLE_OFFSET as f32 * scale,
+        };
+        match self.drag.release(release) {
+            Some(DropAction::Detach { panel, position }) => {
+                self.detach(event_loop, panel, position)
+            }
+            Some(DropAction::Redock { panel }) => self.redock(panel),
+            None => {}
         }
     }
 }
@@ -218,17 +303,26 @@ impl ApplicationHandler for App {
                 }
                 self.request_redraw(target);
             }
+            // While the button is held the pointer keeps being reported outside the window,
+            // so the last position is kept: that is where the drag will end.
             WindowEvent::CursorLeft { .. } => {
-                if let Some(win) = self.win_mut(target) {
-                    win.cursor = None;
+                if self.drag.dragging().is_none() {
+                    if let Some(win) = self.win_mut(target) {
+                        win.cursor = None;
+                    }
+                    self.request_redraw(target);
                 }
-                self.request_redraw(target);
             }
             WindowEvent::MouseInput {
                 state: ElementState::Pressed,
                 button: MouseButton::Left,
                 ..
-            } => self.click(event_loop, target),
+            } => self.press(event_loop, target),
+            WindowEvent::MouseInput {
+                state: ElementState::Released,
+                button: MouseButton::Left,
+                ..
+            } => self.release(event_loop, target),
             _ => {}
         }
     }

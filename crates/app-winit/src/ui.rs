@@ -129,6 +129,19 @@ pub fn dock_back_button_at(point: (f32, f32), width: f32, height: f32, scale: f3
     detached_view(width, height, scale).button.contains(point)
 }
 
+/// The panel whose block is under `point`, outside its button: pressing there starts a drag.
+pub fn block_at(point: (f32, f32), width: f32, scale: f32, docked: &[PanelId]) -> Option<PanelId> {
+    main_rows(width, scale, docked)
+        .into_iter()
+        .find(|row| row.area.contains(point) && !row.button.contains(point))
+        .map(|row| row.panel)
+}
+
+/// True when `point` is over a detached window's block: pressing there starts a drag.
+pub fn content_at(point: (f32, f32), width: f32, height: f32, scale: f32) -> bool {
+    detached_view(width, height, scale).content.contains(point)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -285,5 +298,28 @@ mod tests {
         let view = detached_view(10.0, 10.0, 1.0);
         assert!(view.content.w >= 0.0 && view.content.h >= 0.0);
         assert!(main_rows(10.0, 1.0, &[A])[0].area.w >= 0.0);
+    }
+
+    #[test]
+    fn pressing_a_block_outside_its_button_finds_its_panel() {
+        let rows = main_rows(360.0, 1.0, &[A, B]);
+        let on_block = (rows[1].area.x + 5.0, rows[1].area.y + 5.0);
+        assert_eq!(block_at(on_block, 360.0, 1.0, &[A, B]), Some(B));
+    }
+
+    #[test]
+    fn the_button_and_the_gaps_are_not_blocks() {
+        let rows = main_rows(360.0, 1.0, &[A, B]);
+        let on_button = (rows[0].button.x + 5.0, rows[0].button.y + 5.0);
+        assert_eq!(block_at(on_button, 360.0, 1.0, &[A, B]), None);
+        let in_gap = (rows[0].area.x + 5.0, rows[0].area.y + rows[0].area.h + 5.0);
+        assert_eq!(block_at(in_gap, 360.0, 1.0, &[A, B]), None);
+    }
+
+    #[test]
+    fn the_detached_block_is_below_the_dock_back_button() {
+        assert!(content_at((100.0, 200.0), 320.0, 420.0, 1.0));
+        assert!(!content_at((20.0, 20.0), 320.0, 420.0, 1.0));
+        assert!(!content_at((2.0, 200.0), 320.0, 420.0, 1.0));
     }
 }

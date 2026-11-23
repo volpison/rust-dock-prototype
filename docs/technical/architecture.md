@@ -13,6 +13,7 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/ap
 |---|---|
 | `crates/dock/src/layout.rs` | the rules for where panels live |
 | `crates/dock/src/geometry.rs` | screen arithmetic for dropping a tab: outside the window? where on screen? |
+| `crates/dock/src/drag.rs` | what letting go of a dragged panel does: detach where, dock back or nothing |
 | `crates/app-egui/src/panels.rs` | which panels exist, their names and content |
 | `crates/app-egui/src/app.rs` | how the layout is drawn: dock area, detached windows, menus |
 | `crates/app-egui/src/main.rs` | starting the app |
@@ -20,7 +21,7 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/ap
 | `crates/app-winit/src/render.rs` | drawing them with tiny-skia |
 | `crates/app-winit/src/win.rs` | one OS window: softbuffer surface, canvas, pixel hand-over |
 | `crates/app-winit/src/panels.rs` | the panels' ids, names and colours |
-| `crates/app-winit/src/main.rs` | the event loop: windows, clicks, detach and dock back |
+| `crates/app-winit/src/main.rs` | the event loop: windows, clicks, drags, detach and dock back |
 
 ## Rule the layout keeps
 Every panel is in exactly one place: docked or detached. `detach`, `redock` and `set_position` are the only ways to change that, and they reject unknown panels and double moves.
