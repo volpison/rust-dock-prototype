@@ -21,6 +21,7 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::platform::windows::WindowAttributesExtWindows;
 use winit::window::{CursorIcon, WindowAttributes, WindowId, WindowLevel};
 
+use ui::Rect;
 use win::Win;
 
 /// Sizes of the windows, in points.
@@ -136,23 +137,78 @@ impl App {
         }
     }
 
-    fn request_redraw(&self, target: Target) {
+    /// Redraw the whole of a window.
+    fn request_redraw(&mut self, target: Target) {
+        if let Some(win) = self.win_mut(target) {
+            win.mark_full();
+            win.window.request_redraw();
+        }
+    }
+
+    /// Redraw only `rect` of a window (pixels).
+    fn request_redraw_rect(&mut self, target: Target, rect: Rect) {
+        if let Some(win) = self.win_mut(target) {
+            win.mark_damage(rect);
+            win.window.request_redraw();
+        }
+    }
+
+    /// The panel whose button the pointer is over in `target`: a docked panel's "detach"
+    /// button in the main window, or the window's own panel for its "dock back" button.
+    fn hover_of(&self, target: Target) -> Option<PanelId> {
         match target {
             Target::Main => {
-                if let Some(win) = &self.main {
-                    win.window.request_redraw();
-                }
+                let win = self.main.as_ref()?;
+                let (width, _, scale) = win.metrics();
+                ui::detach_button_at(win.cursor?, width, scale, self.layout.docked())
             }
             Target::Detached(panel) => {
-                if let Some((_, win)) = self.detached.iter().find(|(p, _)| *p == panel) {
-                    win.window.request_redraw();
-                }
+                let (_, win) = self.detached.iter().find(|(p, _)| *p == panel)?;
+                let (width, height, scale) = win.metrics();
+                ui::dock_back_button_at(win.cursor?, width, height, scale).then_some(panel)
             }
-            Target::Ghost => {
-                if let Some((_, win)) = &self.ghost {
-                    win.window.request_redraw();
-                }
+            Target::Ghost => None,
+        }
+    }
+
+    /// Where the button for `hover` (a result of `hover_of`) is in `target`.
+    fn hover_rect(&self, target: Target, hover: Option<PanelId>) -> Option<Rect> {
+        let panel = hover?;
+        match target {
+            Target::Main => {
+                let (width, _, scale) = self.main.as_ref()?.metrics();
+                ui::detach_button_rect(width, scale, self.layout.docked(), panel)
             }
+            Target::Detached(p) => {
+                let (_, win) = self.detached.iter().find(|(q, _)| *q == p)?;
+                let (width, height, scale) = win.metrics();
+                Some(ui::dock_back_button_rect(width, height, scale))
+            }
+            Target::Ghost => None,
+        }
+    }
+
+    /// Set the pointer position of `target` (`None` = outside) and redraw only if that
+    /// changes which button is highlighted, and then only the buttons involved.
+    fn move_pointer(&mut self, target: Target, cursor: Option<(f32, f32)>) {
+        let before = self.hover_of(target);
+        if let Some(win) = self.win_mut(target) {
+            win.cursor = cursor;
+        }
+        let after = self.hover_of(target);
+        if before == after {
+            return;
+        }
+        let changed = [
+            self.hover_rect(target, before),
+            self.hover_rect(target, after),
+        ]
+        .into_iter()
+        .flatten()
+        .reduce(Rect::union);
+        match changed {
+            Some(rect) => self.request_redraw_rect(target, rect),
+            None => self.request_redraw(target),
         }
     }
 
@@ -246,8 +302,8 @@ impl App {
                 MAIN_TITLE
             };
             win.window.set_title(title);
-            win.window.request_redraw();
         }
+        self.request_redraw(Target::Main);
     }
 
     /// The left button went down in `target`: a button acts at once, a block starts a drag.
@@ -371,10 +427,7 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(_) => self.request_redraw(target),
             WindowEvent::RedrawRequested => self.redraw(target),
             WindowEvent::CursorMoved { position, .. } => {
-                if let Some(win) = self.win_mut(target) {
-                    win.cursor = Some((position.x as f32, position.y as f32));
-                }
-                self.request_redraw(target);
+                self.move_pointer(target, Some((position.x as f32, position.y as f32)));
                 self.update_ghost(event_loop, target);
             }
             // The window moved to a display with another scale, or the Windows setting changed.
@@ -390,10 +443,7 @@ impl ApplicationHandler for App {
             // so the last position is kept: that is where the drag will end.
             WindowEvent::CursorLeft { .. } => {
                 if self.drag.dragging().is_none() {
-                    if let Some(win) = self.win_mut(target) {
-                        win.cursor = None;
-                    }
-                    self.request_redraw(target);
+                    self.move_pointer(target, None);
                 }
             }
             WindowEvent::MouseInput {
