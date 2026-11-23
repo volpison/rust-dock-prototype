@@ -55,6 +55,19 @@ pub fn draw_detached(pm: &mut Pixmap, scale: f32, panel: PanelId, hover: bool, d
     button(pm, view.button, scale, hover, Arrow::Left);
 }
 
+/// The ghost that follows the pointer during a drag: the panel's colour in a light frame.
+pub fn draw_ghost(pm: &mut Pixmap, scale: f32, panel: PanelId) {
+    pm.fill(Color::from_rgba8(ARROW[0], ARROW[1], ARROW[2], 255));
+    let inset = (3.0 * scale).round();
+    let inner = Rect {
+        x: inset,
+        y: inset,
+        w: (pm.width() as f32 - 2.0 * inset).max(0.0),
+        h: (pm.height() as f32 - 2.0 * inset).max(0.0),
+    };
+    rounded_rect(pm, inner, 6.0 * scale, panels::color(panel));
+}
+
 /// The panel's colour, or that colour half way to the background while it is dragged.
 fn block_color(panel: PanelId, dragging: bool) -> [u8; 4] {
     let color = panels::color(panel);
