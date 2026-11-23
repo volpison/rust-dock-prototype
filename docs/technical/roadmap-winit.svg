@@ -41,10 +41,10 @@
 <text x="234" y="392" font-size="13" fill="#1F2933">Draw shapes, measure</text>
 <text x="234" y="414" font-size="13" fill="#1F2933">speed and flicker</text>
 <text x="234" y="474" font-size="12" font-weight="600" fill="#2E7D4F">done: Gate A passed</text>
-<line x1="506.0" y1="158" x2="506.0" y2="188" stroke="#2F6FB5" stroke-width="2"/>
-<circle cx="506.0" cy="158" r="7" fill="#2F6FB5"/>
-<rect x="416" y="188" width="180" height="300" rx="12" fill="#E4EEFB" stroke="#2F6FB5" stroke-width="2"/>
-<rect x="428" y="200" width="28" height="24" rx="12" fill="#2F6FB5"/>
+<line x1="506.0" y1="158" x2="506.0" y2="188" stroke="#2E7D4F" stroke-width="2"/>
+<circle cx="506.0" cy="158" r="7" fill="#2E7D4F"/>
+<rect x="416" y="188" width="180" height="300" rx="12" fill="#E3F4EA" stroke="#2E7D4F" stroke-width="2"/>
+<rect x="428" y="200" width="28" height="24" rx="12" fill="#2E7D4F"/>
 <text x="442.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
 <text x="428" y="252" font-size="18" font-weight="700" fill="#1F2933">Windows + input</text>
 <text x="428" y="272" font-size="12" fill="#52606D">own event loop</text>
@@ -54,11 +54,11 @@
 <text x="428" y="370" font-size="13" fill="#1F2933">findings carry over)</text>
 <text x="428" y="392" font-size="13" fill="#1F2933">Display scaling (DPI)</text>
 <text x="428" y="414" font-size="13" fill="#1F2933">Redraw only changes</text>
-<text x="428" y="474" font-size="12" font-weight="600" fill="#2F6FB5">size M</text>
-<line x1="700.0" y1="158" x2="700.0" y2="188" stroke="#7B8794" stroke-width="2"/>
-<circle cx="700.0" cy="158" r="7" fill="#7B8794"/>
-<rect x="610" y="188" width="180" height="300" rx="12" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>
-<rect x="622" y="200" width="28" height="24" rx="12" fill="#52606D"/>
+<text x="428" y="474" font-size="12" font-weight="600" fill="#2E7D4F">done</text>
+<line x1="700.0" y1="158" x2="700.0" y2="188" stroke="#2F6FB5" stroke-width="2"/>
+<circle cx="700.0" cy="158" r="7" fill="#2F6FB5"/>
+<rect x="610" y="188" width="180" height="300" rx="12" fill="#E4EEFB" stroke="#2F6FB5" stroke-width="2"/>
+<rect x="622" y="200" width="28" height="24" rx="12" fill="#2F6FB5"/>
 <text x="636.0" y="217" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
 <text x="622" y="252" font-size="18" font-weight="700" fill="#1F2933">Mini toolkit</text>
 <text x="622" y="272" font-size="12" fill="#52606D">custom-drawn controls</text>
@@ -66,7 +66,7 @@
 <text x="622" y="326" font-size="13" fill="#1F2933">Hover / pressed states</text>
 <text x="622" y="348" font-size="13" fill="#1F2933">Buttons, sliders, knobs</text>
 <text x="622" y="370" font-size="13" fill="#1F2933">Skins from images</text>
-<text x="622" y="474" font-size="12" font-weight="600" fill="#52606D">size L</text>
+<text x="622" y="474" font-size="12" font-weight="600" fill="#2F6FB5">size L</text>
 <line x1="894.0" y1="158" x2="894.0" y2="188" stroke="#7B8794" stroke-width="2"/>
 <circle cx="894.0" cy="158" r="7" fill="#7B8794"/>
 <rect x="804" y="188" width="180" height="300" rx="12" fill="#F1F1EE" stroke="#7B8794" stroke-width="2"/>

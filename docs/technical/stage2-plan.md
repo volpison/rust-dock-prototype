@@ -1,6 +1,6 @@
 # Plan: stage 2, windows and input on winit
 
-Status: pull requests 1 (this plan), 2 (workspace split), 3 (the `app-winit` skeleton) and 4 (display scaling) are merged; 5 (drag-out and drag-back, with feedback) and 5b (the drag ghost) and 6 (redraw only what changed) are merged; 7 (transparency safety) is being built. Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
+Status: pull requests 1 (this plan), 2 (workspace split), 3 (the `app-winit` skeleton) and 4 (display scaling) are merged; 5 (drag-out and drag-back, with feedback) and 5b (the drag ghost), 6 (redraw only what changed) and 7 (transparency safety) are merged: stage 2 is finished. Next: [stage 3](stage3-plan.md). Follows the [spike](winit-spike-plan.md), whose [results](../../spikes/winit/RESULTS.md) passed Gate A on Windows. The whole route is in [the roadmap](roadmap-winit.svg).
 
 ## Goal
 Make the new stack do what the egui program does with windows: several real OS windows from one event loop, panels detached and put back, drag-out, drag-back, correct on scaled displays, and cheap to redraw. Panels stay placeholder drawings. Controls are stage 3, text is stage 5.
