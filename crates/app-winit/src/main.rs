@@ -30,7 +30,7 @@ use ui::Rect;
 use win::Win;
 
 /// Sizes of the windows, in points.
-const MAIN_SIZE: [f64; 2] = [360.0, 280.0];
+const MAIN_SIZE: [f64; 2] = [360.0, 500.0];
 const DETACHED_SIZE: [f64; 2] = [320.0, 420.0];
 
 /// Drag-out: how far outside its window the pointer must be (points), and how far below the
@@ -65,6 +65,9 @@ struct App {
     /// The test window for the toolkit's controls (`--controls`); not part of the dock.
     controls: Option<ControlsWindow>,
     started: Instant,
+    /// The state of the Properties panel's controls: kept when the panel moves between
+    /// the main window and a window of its own.
+    properties: controls::Panel,
 }
 
 struct ControlsWindow {
@@ -155,6 +158,7 @@ impl App {
             ghost: None,
             controls: None,
             started: Instant::now(),
+            properties: controls::Panel::new(),
         }
     }
 
@@ -192,6 +196,7 @@ impl App {
             Target::Main => {
                 let docked = self.layout.docked().to_vec();
                 let dragging = self.drag.dragging();
+                let properties = &self.properties;
                 let Some(win) = self.main.as_mut() else {
                     return;
                 };
@@ -200,19 +205,20 @@ impl App {
                     let hover = cursor.and_then(|point| {
                         ui::detach_button_at(point, canvas.width() as f32, scale, &docked)
                     });
-                    render::draw_main(canvas, scale, &docked, hover, dragging);
+                    render::draw_main(canvas, scale, &docked, hover, dragging, properties);
                 });
             }
             Target::Detached(panel) => {
                 let dragging = self.drag.dragging() == Some(panel);
-                let Some(win) = self.win_mut(target) else {
+                let properties = &self.properties;
+                let Some((_, win)) = self.detached.iter_mut().find(|(p, _)| *p == panel) else {
                     return;
                 };
                 let cursor = win.cursor;
                 win.present(|canvas, scale| {
                     let (w, h) = (canvas.width() as f32, canvas.height() as f32);
                     let hover = cursor.is_some_and(|p| ui::dock_back_button_at(p, w, h, scale));
-                    render::draw_detached(canvas, scale, panel, hover, dragging);
+                    render::draw_detached(canvas, scale, panel, hover, dragging, properties);
                 });
             }
             Target::Ghost => {
@@ -274,6 +280,73 @@ impl App {
                 Some(ui::dock_back_button_rect(width, height, scale))
             }
             Target::Ghost => None,
+        }
+    }
+
+    /// Where the Properties controls are in `target`, if that window shows them.
+    fn properties_plan(&self, target: Target) -> Option<controls::Plan> {
+        match target {
+            Target::Main => {
+                let (width, _, scale) = self.main.as_ref()?.metrics();
+                let body = ui::body_of(width, scale, self.layout.docked(), panels::PROPERTIES)?;
+                Some(controls::plan_in(body, scale))
+            }
+            Target::Detached(panel) if panels::has_controls(panel) => {
+                let (_, win) = self.detached.iter().find(|(p, _)| *p == panel)?;
+                let (width, height, scale) = win.metrics();
+                let (_, body) = ui::detached_grip_body(width, height, scale);
+                Some(controls::plan_in(body, scale))
+            }
+            _ => None,
+        }
+    }
+
+    fn now_ms(&self) -> u64 {
+        self.started.elapsed().as_millis() as u64
+    }
+
+    /// The pointer moved in `target`: let the Properties controls follow it (hover, drags).
+    fn controls_moved(&mut self, target: Target, pos: (f32, f32)) {
+        let Some(plan) = self.properties_plan(target) else {
+            return;
+        };
+        if self.properties.pointer_moved(&plan, pos) {
+            self.request_redraw_rect(target, plan.area);
+        }
+    }
+
+    /// The left button went down in `target`. True when it was in the Properties controls'
+    /// room, which then takes it (so it never starts dragging the panel).
+    fn controls_pressed(&mut self, target: Target) -> bool {
+        let Some(plan) = self.properties_plan(target) else {
+            return false;
+        };
+        let Some(cursor) = self.win_mut(target).and_then(|win| win.cursor) else {
+            return false;
+        };
+        if !plan.area.contains(cursor) {
+            return false;
+        }
+        let now = self.now_ms();
+        if self.properties.press(&plan, cursor, now) {
+            self.request_redraw_rect(target, plan.area);
+        }
+        true
+    }
+
+    /// The left button was let go in `target`: end what a control was holding.
+    fn controls_released(&mut self, target: Target) {
+        if self.properties.input.captured().is_none() {
+            return;
+        }
+        let plan = self.properties_plan(target);
+        let cursor = self.win_mut(target).and_then(|win| win.cursor);
+        let (Some(plan), Some(cursor)) = (plan, cursor) else {
+            self.properties.cancel();
+            return;
+        };
+        if self.properties.release(&plan, cursor) {
+            self.request_redraw_rect(target, plan.area);
         }
     }
 
@@ -360,6 +433,8 @@ impl App {
         if self.layout.detach(panel, position).is_err() {
             return;
         }
+        // The panel's controls change window: nothing stays held or hovered.
+        self.properties.cancel();
         let mut attributes = WindowAttributes::default()
             .with_title(panels::title(panel))
             .with_inner_size(LogicalSize::new(DETACHED_SIZE[0], DETACHED_SIZE[1]));
@@ -377,6 +452,7 @@ impl App {
         if self.layout.redock(panel).is_err() {
             return;
         }
+        self.properties.cancel();
         // The window the drag started in is going away.
         self.drag.cancel();
         self.ghost = None;
@@ -413,6 +489,9 @@ impl App {
     }
 
     fn press_inner(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        if self.controls_pressed(target) {
+            return;
+        }
         match target {
             Target::Main => {
                 let Some(win) = &self.main else {
@@ -440,7 +519,7 @@ impl App {
                 let (width, height, scale) = win.metrics();
                 if ui::dock_back_button_at(cursor, width, height, scale) {
                     self.redock(panel);
-                } else if ui::content_at(cursor, width, height, scale) {
+                } else if ui::content_at(cursor, width, height, scale, panel) {
                     self.drag.press(panel, Source::Detached);
                 }
             }
@@ -450,6 +529,7 @@ impl App {
     /// The left button was let go in `target`. The pointer keeps being reported outside the
     /// window while the button is held, so `cursor` is where the drag ended.
     fn release(&mut self, event_loop: &ActiveEventLoop, target: Target) {
+        self.controls_released(target);
         self.ghost = None;
         self.finish_drag(event_loop, target);
         // Back to the normal pointer and block (the window may be gone by now).
@@ -541,7 +621,9 @@ impl ApplicationHandler for App {
             WindowEvent::Resized(_) => self.request_redraw(target),
             WindowEvent::RedrawRequested => self.redraw(target),
             WindowEvent::CursorMoved { position, .. } => {
-                self.move_pointer(target, Some((position.x as f32, position.y as f32)));
+                let pos = (position.x as f32, position.y as f32);
+                self.move_pointer(target, Some(pos));
+                self.controls_moved(target, pos);
                 self.update_ghost(event_loop, target);
             }
             // The window moved to a display with another scale, or the Windows setting changed.
@@ -558,6 +640,32 @@ impl ApplicationHandler for App {
             WindowEvent::CursorLeft { .. } => {
                 if self.drag.dragging().is_none() {
                     self.move_pointer(target, None);
+                }
+                // A control with the button held keeps the pointer (the drag goes on).
+                if let Some(plan) = self.properties_plan(target) {
+                    if self.properties.pointer_left() {
+                        self.request_redraw_rect(target, plan.area);
+                    }
+                }
+            }
+            WindowEvent::ModifiersChanged(modifiers) => self
+                .properties
+                .set_fine(modifiers.state().contains(ModifiersState::SHIFT)),
+            WindowEvent::MouseWheel { delta, .. } => {
+                let plan = self.properties_plan(target);
+                let cursor = self.win_mut(target).and_then(|win| win.cursor);
+                if let (Some(plan), Some(cursor)) = (plan, cursor) {
+                    let changed = match delta {
+                        MouseScrollDelta::LineDelta(_, y) => {
+                            self.properties.wheel(&plan, cursor, y)
+                        }
+                        MouseScrollDelta::PixelDelta(p) => {
+                            self.properties.wheel_pixels(&plan, cursor, p.y as f32)
+                        }
+                    };
+                    if changed {
+                        self.request_redraw_rect(target, plan.area);
+                    }
                 }
             }
             WindowEvent::MouseInput {

@@ -12,11 +12,18 @@ use toolkit::layout::{Cross, Insets, Item, Size, Stack};
 
 pub use toolkit::geometry::Rect;
 
+use crate::controls;
+use crate::panels;
+
 const MARGIN: f32 = 12.0;
 const ROW_HEIGHT: f32 = 72.0;
 const ROW_GAP: f32 = 10.0;
 const BUTTON_WIDTH: f32 = 96.0;
 const BUTTON_HEIGHT: f32 = 44.0;
+/// A panel with controls: the strip at its top that is pressed to drag it, in a window of its
+/// own (the main window's strip also holds the "detach" button, so it is taller).
+const GRIP_HEIGHT: f32 = 24.0;
+const HEADER_HEIGHT: f32 = 56.0;
 
 /// One docked panel in the main window: its block and its "detach" button.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -24,23 +31,39 @@ pub struct Row {
     pub panel: PanelId,
     pub area: Rect,
     pub button: Rect,
+    /// Where pressing starts a drag: the whole block, or the strip on top of a panel with
+    /// controls (the button sits in it).
+    pub grip: Rect,
+    /// The room for the controls, for a panel that has them.
+    pub body: Option<Rect>,
+}
+
+/// How tall a docked panel's row is, in points.
+fn row_height(panel: PanelId) -> f32 {
+    if panels::has_controls(panel) {
+        HEADER_HEIGHT + controls::HEIGHT
+    } else {
+        ROW_HEIGHT
+    }
 }
 
 /// The docked panels, one row each, from the top. `width` is the window's width in pixels.
 pub fn main_rows(width: f32, scale: f32, docked: &[PanelId]) -> Vec<Row> {
     let count = docked.len();
+    let heights: Vec<f32> = docked.iter().map(|p| row_height(*p)).collect();
     let height =
-        (2.0 * MARGIN + count as f32 * ROW_HEIGHT + count.saturating_sub(1) as f32 * ROW_GAP)
+        (2.0 * MARGIN + heights.iter().sum::<f32>() + count.saturating_sub(1) as f32 * ROW_GAP)
             * scale;
+    let items: Vec<Item> = heights
+        .iter()
+        .map(|h| Item::stretch(Size::Fixed(*h)))
+        .collect();
     let areas = Stack::column()
         .gap(ROW_GAP)
         .insets(Insets::all(MARGIN))
-        .layout(
-            Rect::new(0.0, 0.0, width, height),
-            scale,
-            &vec![Item::stretch(Size::Fixed(ROW_HEIGHT)); count],
-        );
-    // In each row the button is at the right end, MARGIN from the edge, centred vertically.
+        .layout(Rect::new(0.0, 0.0, width, height), scale, &items);
+    // In each row the button is at the right end of its top strip, MARGIN from the edge,
+    // centred vertically in that strip.
     let inside_row = Stack::row().insets(Insets {
         right: MARGIN,
         ..Insets::default()
@@ -52,10 +75,27 @@ pub fn main_rows(width: f32, scale: f32, docked: &[PanelId]) -> Vec<Row> {
     docked
         .iter()
         .zip(areas)
-        .map(|(panel, area)| Row {
-            panel: *panel,
-            area,
-            button: inside_row.layout(area, scale, &row_items)[1],
+        .map(|(panel, area)| {
+            let (grip, body) = if panels::has_controls(*panel) {
+                let parts = Stack::column().layout(
+                    area,
+                    scale,
+                    &[
+                        Item::stretch(Size::Fixed(HEADER_HEIGHT)),
+                        Item::stretch(Size::Fill(1.0)),
+                    ],
+                );
+                (parts[0], Some(parts[1]))
+            } else {
+                (area, None)
+            };
+            Row {
+                panel: *panel,
+                area,
+                button: inside_row.layout(grip, scale, &row_items)[1],
+                grip,
+                body,
+            }
         })
         .collect()
 }
@@ -111,6 +151,29 @@ pub fn detach_button_rect(
         .map(|row| row.button)
 }
 
+/// In a detached window of a panel with controls: the strip at the top of its block that is
+/// pressed to drag it, and the room for the controls below it.
+pub fn detached_grip_body(width: f32, height: f32, scale: f32) -> (Rect, Rect) {
+    let content = detached_view(width, height, scale).content;
+    let parts = Stack::column().layout(
+        content,
+        scale,
+        &[
+            Item::stretch(Size::Fixed(GRIP_HEIGHT)),
+            Item::stretch(Size::Fill(1.0)),
+        ],
+    );
+    (parts[0], parts[1])
+}
+
+/// Where the controls of `panel` are in the main window, if it is docked and has any.
+pub fn body_of(width: f32, scale: f32, docked: &[PanelId], panel: PanelId) -> Option<Rect> {
+    main_rows(width, scale, docked)
+        .into_iter()
+        .find(|row| row.panel == panel)
+        .and_then(|row| row.body)
+}
+
 /// Where a detached window's "dock back" button is.
 pub fn dock_back_button_rect(width: f32, height: f32, scale: f32) -> Rect {
     detached_view(width, height, scale).button
@@ -125,13 +188,18 @@ pub fn dock_back_button_at(point: (f32, f32), width: f32, height: f32, scale: f3
 pub fn block_at(point: (f32, f32), width: f32, scale: f32, docked: &[PanelId]) -> Option<PanelId> {
     main_rows(width, scale, docked)
         .into_iter()
-        .find(|row| row.area.contains(point) && !row.button.contains(point))
+        .find(|row| row.grip.contains(point) && !row.button.contains(point))
         .map(|row| row.panel)
 }
 
-/// True when `point` is over a detached window's block: pressing there starts a drag.
-pub fn content_at(point: (f32, f32), width: f32, height: f32, scale: f32) -> bool {
-    detached_view(width, height, scale).content.contains(point)
+/// True when `point` is where pressing starts a drag in a detached window: the whole block, or
+/// only the strip on top of it for a panel with controls.
+pub fn content_at(point: (f32, f32), width: f32, height: f32, scale: f32, panel: PanelId) -> bool {
+    if panels::has_controls(panel) {
+        detached_grip_body(width, height, scale).0.contains(point)
+    } else {
+        detached_view(width, height, scale).content.contains(point)
+    }
 }
 
 #[cfg(test)]
@@ -296,9 +364,9 @@ mod tests {
 
     #[test]
     fn the_detached_block_is_below_the_dock_back_button() {
-        assert!(content_at((100.0, 200.0), 320.0, 420.0, 1.0));
-        assert!(!content_at((20.0, 20.0), 320.0, 420.0, 1.0));
-        assert!(!content_at((2.0, 200.0), 320.0, 420.0, 1.0));
+        assert!(content_at((100.0, 200.0), 320.0, 420.0, 1.0, A));
+        assert!(!content_at((20.0, 20.0), 320.0, 420.0, 1.0, A));
+        assert!(!content_at((2.0, 200.0), 320.0, 420.0, 1.0, A));
     }
 
     #[test]
@@ -313,5 +381,104 @@ mod tests {
             dock_back_button_rect(320.0, 420.0, 1.0),
             detached_view(320.0, 420.0, 1.0).button
         );
+    }
+
+    const P: PanelId = panels::PROPERTIES;
+
+    #[test]
+    fn a_panel_with_controls_has_a_taller_row_with_a_strip_and_a_body() {
+        let rows = main_rows(360.0, 1.0, &[A, P]);
+        assert_eq!(rows[0].area.h, 72.0);
+        assert_eq!(rows[0].grip, rows[0].area);
+        assert_eq!(rows[0].body, None);
+        let row = rows[1];
+        assert_eq!(row.area.h, HEADER_HEIGHT + controls::HEIGHT);
+        assert_eq!(row.grip.h, HEADER_HEIGHT);
+        let body = row.body.unwrap();
+        assert_eq!(body.y, row.grip.y + row.grip.h);
+        assert_eq!(body.y + body.h, row.area.y + row.area.h);
+        assert_eq!(rows[1].area.y, rows[0].area.y + rows[0].area.h + ROW_GAP);
+    }
+
+    #[test]
+    fn the_detach_button_of_a_panel_with_controls_is_in_its_strip() {
+        let row = main_rows(360.0, 1.0, &[P])[0];
+        assert!(row.button.y >= row.grip.y);
+        assert!(row.button.y + row.button.h <= row.grip.y + row.grip.h);
+        assert_eq!(row.button.x + row.button.w + 12.0, row.area.x + row.area.w);
+    }
+
+    #[test]
+    fn pressing_a_panels_strip_drags_it_but_its_controls_do_not() {
+        let row = main_rows(360.0, 1.0, &[P])[0];
+        let on_strip = (row.grip.x + 5.0, row.grip.y + 5.0);
+        let on_body = (row.body.unwrap().x + 20.0, row.body.unwrap().y + 20.0);
+        assert_eq!(block_at(on_strip, 360.0, 1.0, &[P]), Some(P));
+        assert_eq!(block_at(on_body, 360.0, 1.0, &[P]), None);
+        assert_eq!(
+            body_of(360.0, 1.0, &[P], P),
+            Some(row.body.unwrap()),
+            "the controls are found by panel"
+        );
+        assert_eq!(body_of(360.0, 1.0, &[A], A), None);
+        assert_eq!(body_of(360.0, 1.0, &[A], P), None);
+    }
+
+    #[test]
+    fn in_a_detached_window_only_the_strip_of_a_panel_with_controls_drags_it() {
+        let (grip, body) = detached_grip_body(320.0, 420.0, 1.0);
+        let content = detached_view(320.0, 420.0, 1.0).content;
+        assert_eq!(grip.y, content.y);
+        assert_eq!(body.y, grip.y + grip.h);
+        assert!(content_at(
+            (grip.x + 5.0, grip.y + 5.0),
+            320.0,
+            420.0,
+            1.0,
+            P
+        ));
+        assert!(!content_at(
+            (body.x + 5.0, body.y + 5.0),
+            320.0,
+            420.0,
+            1.0,
+            P
+        ));
+        // A panel without controls drags from anywhere on its block.
+        assert!(content_at(
+            (body.x + 5.0, body.y + 5.0),
+            320.0,
+            420.0,
+            1.0,
+            A
+        ));
+    }
+
+    #[test]
+    fn the_controls_fit_in_the_detached_window_at_every_scale() {
+        for scale in [1.0_f32, 1.25, 1.5, 1.75, 2.0, 2.5] {
+            let (_, body) = detached_grip_body(320.0 * scale, 420.0 * scale, scale);
+            assert!(
+                body.h + 1.0 >= controls::HEIGHT * scale,
+                "at {scale}: {body:?}"
+            );
+            assert!(body.w + 1.0 >= 296.0 * scale, "at {scale}: {body:?}");
+        }
+    }
+
+    #[test]
+    fn every_rectangle_of_a_panel_with_controls_is_on_whole_pixels() {
+        for scale in [1.0_f32, 1.25, 1.5, 1.75, 2.0, 2.5] {
+            for row in main_rows(360.0 * scale, scale, &[A, P]) {
+                let mut rects = vec![row.area, row.button, row.grip];
+                rects.extend(row.body);
+                for r in rects {
+                    assert!(
+                        [r.x, r.y, r.w, r.h].iter().all(|v| *v == v.round()),
+                        "at {scale}: {r:?}"
+                    );
+                }
+            }
+        }
     }
 }

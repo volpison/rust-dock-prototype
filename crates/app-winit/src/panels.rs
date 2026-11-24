@@ -9,6 +9,11 @@ pub const PROPERTIES: PanelId = PanelId(3);
 
 pub const ALL: [PanelId; 3] = [TOOLS, LAYERS, PROPERTIES];
 
+/// True for a panel that holds real controls (the others are still coloured blocks).
+pub fn has_controls(id: PanelId) -> bool {
+    id == PROPERTIES
+}
+
 pub fn title(id: PanelId) -> &'static str {
     match id {
         TOOLS => "Tools",

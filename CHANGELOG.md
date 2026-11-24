@@ -5,6 +5,7 @@ All notable changes are listed here. Format: [Keep a Changelog](https://keepacha
 ## [Unreleased]
 
 ### Added
+- Winit version: the Properties panel now has real controls (toggle, reset button, slider, two knobs, number displays), in the main window and in its own window, with their values kept when it moves. Drag the strip on top of it to detach or dock it; the controls never start a drag. The main window opens taller (360 x 500 points).
 - Winit version: `cargo run -p rust-dock-winit -- --controls` also opens a test window with a toggle, a button, a slider, two knobs and number displays, all drawn from shapes (hold Shift for fine changes, double-click a slider or knob to reset it).
 - Winit version: the drag ghost has rounded, see-through corners on Windows. Elsewhere, or with `DOCK_OPAQUE=1`, it is a plain rectangle. `DOCK_TRACE=1` also prints each window's size.
 - Winit version: moving the pointer only redraws when a button's highlight changes, and then only the buttons involved are handed to the system. `DOCK_TRACE=1` prints each frame's time.

@@ -29,14 +29,20 @@ fn shade(rgba: [u8; 4], look: Look) -> [u8; 4] {
     [change(rgba[0]), change(rgba[1]), change(rgba[2]), rgba[3]]
 }
 
+/// A window that holds only the controls (`--controls`).
 pub fn draw(pm: &mut Pixmap, panel: &Panel, plan: &Plan) {
-    let scale = plan.scale;
     pm.fill(Color::from_rgba8(
         BACKGROUND[0],
         BACKGROUND[1],
         BACKGROUND[2],
         BACKGROUND[3],
     ));
+    draw_controls(pm, panel, plan);
+}
+
+/// The controls only, on whatever is already drawn (a panel's card).
+pub fn draw_controls(pm: &mut Pixmap, panel: &Panel, plan: &Plan) {
+    let scale = plan.scale;
 
     // Toggle: a pill with a round handle at the end it is on.
     let look = panel.toggle.look(&panel.input, true);

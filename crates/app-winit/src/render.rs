@@ -5,6 +5,8 @@
 use dock::layout::PanelId;
 use tiny_skia::{Color, FillRule, Paint, PathBuilder, Pixmap, Transform};
 
+use crate::controls::{self, Panel};
+use crate::controls_render;
 use crate::panels;
 use crate::ui::{self, Rect};
 
@@ -12,16 +14,21 @@ const BACKGROUND: [u8; 4] = [30, 33, 41, 255];
 const BUTTON: [u8; 4] = [20, 22, 28, 255];
 const BUTTON_HOVER: [u8; 4] = [70, 76, 92, 255];
 const ARROW: [u8; 4] = [240, 240, 240, 255];
+/// The body of a panel with controls, behind them.
+const CARD: [u8; 4] = [38, 42, 52, 255];
+/// The marks on a panel's grip strip.
+const GRIP_MARK: [u8; 4] = [20, 22, 28, 170];
 
 /// The main window: one block per docked panel, each with a "detach" button.
 /// `hover` is the panel whose button is under the pointer; `dragging` is the panel being
-/// dragged, whose block is drawn dimmed.
+/// dragged, whose block is drawn dimmed. `properties` is what the panel with controls shows.
 pub fn draw_main(
     pm: &mut Pixmap,
     scale: f32,
     docked: &[PanelId],
     hover: Option<PanelId>,
     dragging: Option<PanelId>,
+    properties: &Panel,
 ) {
     pm.fill(Color::from_rgba8(
         BACKGROUND[0],
@@ -31,7 +38,13 @@ pub fn draw_main(
     ));
     for row in ui::main_rows(pm.width() as f32, scale, docked) {
         let fill = block_color(row.panel, dragging == Some(row.panel));
-        rounded_rect(pm, row.area, 10.0 * scale, fill);
+        match row.body {
+            Some(body) => {
+                card(pm, row.area, row.grip, scale, fill, false);
+                controls_render::draw_controls(pm, properties, &controls::plan_in(body, scale));
+            }
+            None => rounded_rect(pm, row.area, 10.0 * scale, fill),
+        }
         button(
             pm,
             row.button,
@@ -43,7 +56,15 @@ pub fn draw_main(
 }
 
 /// A detached window: a "dock back" button and the panel's block (dimmed while `dragging`).
-pub fn draw_detached(pm: &mut Pixmap, scale: f32, panel: PanelId, hover: bool, dragging: bool) {
+/// A panel with controls shows them, with `properties` as their state.
+pub fn draw_detached(
+    pm: &mut Pixmap,
+    scale: f32,
+    panel: PanelId,
+    hover: bool,
+    dragging: bool,
+    properties: &Panel,
+) {
     pm.fill(Color::from_rgba8(
         BACKGROUND[0],
         BACKGROUND[1],
@@ -51,7 +72,14 @@ pub fn draw_detached(pm: &mut Pixmap, scale: f32, panel: PanelId, hover: bool, d
         BACKGROUND[3],
     ));
     let view = ui::detached_view(pm.width() as f32, pm.height() as f32, scale);
-    rounded_rect(pm, view.content, 10.0 * scale, block_color(panel, dragging));
+    let fill = block_color(panel, dragging);
+    if panels::has_controls(panel) {
+        let (grip, body) = ui::detached_grip_body(pm.width() as f32, pm.height() as f32, scale);
+        card(pm, view.content, grip, scale, fill, true);
+        controls_render::draw_controls(pm, properties, &controls::plan_in(body, scale));
+    } else {
+        rounded_rect(pm, view.content, 10.0 * scale, fill);
+    }
     button(pm, view.button, scale, hover, Arrow::Left);
 }
 
@@ -80,6 +108,26 @@ pub fn draw_ghost(pm: &mut Pixmap, scale: f32, panel: PanelId, see_through: bool
         h: (pm.height() as f32 - 2.0 * inset).max(0.0),
     };
     rounded_rect(pm, inner, 6.0 * scale, panels::color(panel));
+}
+
+/// A panel with controls: a card, and on top of it the strip that drags the panel, in the
+/// panel's colour and with three bars as a grip mark (centred in a window of its own, at the
+/// left in the main window, where the "detach" button takes the right end).
+fn card(pm: &mut Pixmap, area: Rect, grip: Rect, scale: f32, fill: [u8; 4], centred: bool) {
+    rounded_rect(pm, area, 10.0 * scale, CARD);
+    rounded_rect(pm, grip, 10.0 * scale, fill);
+    let (width, height, gap) = (28.0 * scale, 3.0 * scale, 4.0 * scale);
+    let total = 3.0 * height + 2.0 * gap;
+    let x = if centred {
+        grip.x + (grip.w - width) / 2.0
+    } else {
+        grip.x + 16.0 * scale
+    };
+    let top = grip.y + (grip.h - total) / 2.0;
+    for i in 0..3 {
+        let bar = Rect::new(x, top + i as f32 * (height + gap), width, height);
+        rounded_rect(pm, bar, height / 2.0, GRIP_MARK);
+    }
 }
 
 /// The panel's colour, or that colour half way to the background while it is dragged.
