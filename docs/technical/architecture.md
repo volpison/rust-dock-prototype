@@ -15,6 +15,7 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/to
 | `crates/dock/src/geometry.rs` | screen arithmetic for dropping a tab: outside the window? where on screen? |
 | `crates/dock/src/drag.rs` | what letting go of a dragged panel does: detach where, dock back or nothing |
 | `crates/toolkit/src/input.rs` | pointer state for a window: hover, button held (capture), click or not; double-click detection |
+| `crates/toolkit/src/digits.rs` | a 7-segment number display: which bars each digit lights, a number as lit and unlit rectangles |
 | `crates/toolkit/src/geometry.rs` | `Rect`: contains, union, snapping to whole pixels, the changed-area pixels |
 | `crates/toolkit/src/layout.rs` | rows and columns in points: gaps, insets, fixed and filling items, scaled and snapped |
 | `crates/toolkit/src/value.rs` | a value between two ends: range, steps, default, and how a drag moves it (shared by slider and knob) |
