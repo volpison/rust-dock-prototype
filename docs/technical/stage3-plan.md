@@ -1,6 +1,6 @@
 # Plan: stage 3, a mini toolkit for custom-drawn controls
 
-Status: agreed in review (2026-11-23). Pull request 2 (pointer input, button and toggle in `crates/toolkit`) is merged; 3 (layout) is being built. Follows [stage 2](stage2-plan.md), which is finished: the winit program does what the egui program does with windows. The whole route is in [the roadmap](roadmap-winit.svg). Stage 3 ends at **Gate B**.
+Status: agreed in review (2026-11-23). Pull request 2 (pointer input, button and toggle in `crates/toolkit`) and 3 (layout, used by `app-winit`) are merged; 4 (slider and knob logic) is being built. Follows [stage 2](stage2-plan.md), which is finished: the winit program does what the egui program does with windows. The whole route is in [the roadmap](roadmap-winit.svg). Stage 3 ends at **Gate B**.
 
 ## Where stage 2 left us
 - Several real OS windows from one event loop; detach and dock back by buttons or by dragging; a ghost follows the pointer; correct at 150% display scaling; see-through corners on Windows, with an opaque fallback elsewhere.
