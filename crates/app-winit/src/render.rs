@@ -124,7 +124,7 @@ fn button(pm: &mut Pixmap, rect: Rect, scale: f32, hover: bool, arrow: Arrow) {
     triangle(pm, points, ARROW);
 }
 
-fn fill_path(pm: &mut Pixmap, builder: PathBuilder, rgba: [u8; 4]) {
+pub(crate) fn fill_path(pm: &mut Pixmap, builder: PathBuilder, rgba: [u8; 4]) {
     if let Some(path) = builder.finish() {
         let mut paint = Paint::default();
         paint.set_color_rgba8(rgba[0], rgba[1], rgba[2], rgba[3]);
@@ -149,7 +149,7 @@ fn triangle(pm: &mut Pixmap, points: [(f32, f32); 3], rgba: [u8; 4]) {
 }
 
 /// A filled rounded rectangle.
-fn rounded_rect(pm: &mut Pixmap, rect: Rect, radius: f32, rgba: [u8; 4]) {
+pub(crate) fn rounded_rect(pm: &mut Pixmap, rect: Rect, radius: f32, rgba: [u8; 4]) {
     let Rect { x, y, w, h } = rect;
     let r = radius.min(w / 2.0).min(h / 2.0).max(0.0);
     let mut pb = PathBuilder::new();

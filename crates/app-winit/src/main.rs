@@ -5,6 +5,8 @@
 //! Panels have no text yet (stage 5): each is a coloured block, the arrow on a button says
 //! what it does (right = detach, left = dock back), and the window title names the panel.
 
+mod controls;
+mod controls_render;
 mod panels;
 mod pixel;
 mod render;
@@ -14,10 +16,12 @@ mod win;
 use dock::drag::{DragTracker, DropAction, Release, Source};
 use dock::geometry::{is_outside_window, to_screen, window_origin_under_cursor};
 use dock::layout::{Layout, PanelId};
+use std::time::Instant;
 use winit::application::ApplicationHandler;
 use winit::dpi::{LogicalSize, PhysicalPosition, PhysicalSize};
-use winit::event::{ElementState, MouseButton, WindowEvent};
+use winit::event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::ModifiersState;
 #[cfg(windows)]
 use winit::platform::windows::WindowAttributesExtWindows;
 use winit::window::{CursorIcon, WindowAttributes, WindowId, WindowLevel};
@@ -58,6 +62,87 @@ struct App {
     drag: DragTracker,
     /// Follows the pointer while a panel is dragged outside its window.
     ghost: Option<(PanelId, Win)>,
+    /// The test window for the toolkit's controls (`--controls`); not part of the dock.
+    controls: Option<ControlsWindow>,
+    started: Instant,
+}
+
+struct ControlsWindow {
+    win: Win,
+    panel: controls::Panel,
+}
+
+impl ControlsWindow {
+    fn plan(&self) -> controls::Plan {
+        let (w, h, scale) = self.win.metrics();
+        controls::plan(w, h, scale)
+    }
+
+    fn redraw(&mut self) {
+        let plan = self.plan();
+        let panel = &self.panel;
+        self.win
+            .present(|canvas, _| controls_render::draw(canvas, panel, &plan));
+    }
+
+    fn changed(&mut self, changed: bool) {
+        if changed {
+            self.win.mark_full();
+            self.win.window.request_redraw();
+        }
+    }
+
+    fn event(&mut self, event: &WindowEvent, now_ms: u64) {
+        match event {
+            WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } => self.changed(true),
+            WindowEvent::RedrawRequested => self.redraw(),
+            WindowEvent::CursorMoved { position, .. } => {
+                let pos = (position.x as f32, position.y as f32);
+                self.win.cursor = Some(pos);
+                let plan = self.plan();
+                let changed = self.panel.pointer_moved(&plan, pos);
+                self.changed(changed);
+            }
+            WindowEvent::CursorLeft { .. } => {
+                // While a button is held the last position is kept (the drag goes on).
+                let changed = self.panel.pointer_left();
+                self.changed(changed);
+            }
+            WindowEvent::ModifiersChanged(m) => {
+                let fine = m.state().contains(ModifiersState::SHIFT);
+                self.panel.set_fine(fine);
+            }
+            WindowEvent::MouseInput {
+                state,
+                button: MouseButton::Left,
+                ..
+            } => {
+                let Some(pos) = self.win.cursor else {
+                    return;
+                };
+                let plan = self.plan();
+                let changed = match state {
+                    ElementState::Pressed => self.panel.press(&plan, pos, now_ms),
+                    ElementState::Released => self.panel.release(&plan, pos),
+                };
+                self.changed(changed);
+            }
+            WindowEvent::MouseWheel { delta, .. } => {
+                let Some(pos) = self.win.cursor else {
+                    return;
+                };
+                let plan = self.plan();
+                let changed = match delta {
+                    MouseScrollDelta::LineDelta(_, y) => self.panel.wheel(&plan, pos, *y),
+                    MouseScrollDelta::PixelDelta(p) => {
+                        self.panel.wheel_pixels(&plan, pos, p.y as f32)
+                    }
+                };
+                self.changed(changed);
+            }
+            _ => {}
+        }
+    }
 }
 
 impl App {
@@ -68,6 +153,8 @@ impl App {
             detached: Vec::new(),
             drag: DragTracker::new(),
             ghost: None,
+            controls: None,
+            started: Instant::now(),
         }
     }
 
@@ -414,9 +501,33 @@ impl ApplicationHandler for App {
             .with_title(MAIN_TITLE)
             .with_inner_size(LogicalSize::new(MAIN_SIZE[0], MAIN_SIZE[1]));
         self.main = Some(Win::new(event_loop, attributes));
+        if std::env::args().any(|a| a == "--controls") {
+            let attributes = WindowAttributes::default()
+                .with_title("Controls (toolkit test)")
+                .with_inner_size(LogicalSize::new(320.0, 300.0));
+            self.controls = Some(ControlsWindow {
+                win: Win::new(event_loop, attributes),
+                panel: controls::Panel::new(),
+            });
+        }
     }
 
     fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+        if self
+            .controls
+            .as_ref()
+            .is_some_and(|c| c.win.window.id() == id)
+        {
+            if matches!(event, WindowEvent::CloseRequested) {
+                self.controls = None;
+                return;
+            }
+            let now_ms = self.started.elapsed().as_millis() as u64;
+            if let Some(c) = self.controls.as_mut() {
+                c.event(&event, now_ms);
+            }
+            return;
+        }
         let Some(target) = self.target_of(id) else {
             return;
         };

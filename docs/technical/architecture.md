@@ -27,6 +27,8 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/to
 | `crates/app-egui/src/main.rs` | starting the app |
 | `crates/app-winit/src/ui.rs` | where things are in a window (pure: rows, buttons, hit-testing), built with the toolkit's layout |
 | `crates/app-winit/src/render.rs` | drawing them with tiny-skia |
+| `crates/app-winit/src/controls.rs` | the controls test window (`--controls`): where each control is, and what pointer, Shift and wheel do to them (pure, tested) |
+| `crates/app-winit/src/controls_render.rs` | drawing those controls with tiny-skia, from shapes only |
 | `crates/app-winit/src/win.rs` | one OS window: softbuffer surface, canvas, changed-area presenting |
 | `crates/app-winit/src/pixel.rs` | the pixel hand-over to softbuffer, and where see-through windows are allowed (pure) |
 | `crates/app-winit/src/panels.rs` | the panels' ids, names and colours |
