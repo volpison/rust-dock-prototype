@@ -15,6 +15,8 @@ Any of these returns the panel to the main window:
 ## The winit version (experimental)
 Run it with `cargo run -p rust-dock-winit`. The main window shows one coloured block per panel. Click the button with the right-pointing arrow to move that panel into its own window. In that window, click the button with the left-pointing arrow, or close the window, to put it back. The windows follow the display scaling, including a change while the program runs. You can also press on a panel's block, drag it (its block dims and the pointer turns into a grabbing hand; outside the window a small ghost follows the pointer) out of the main window and let go outside to detach it where you let go; in a panel window, drag its block over the main window and let go to dock it back. On Wayland the system places the new window and dragging back is not available, so use the buttons. There is no text: panels are told apart by colour and by the window's title.
 
+To try the toolkit's controls, run `cargo run -p rust-dock-winit -- --controls`: a second window shows a toggle, a reset button, a slider, two knobs and three number displays. Drag the slider or a knob (up turns a knob up), hold Shift for fine changes, use the mouse wheel over one, and double-click a slider or knob to put it back to its start value.
+
 ## Good to know
 - If every panel is detached, the egui program's main window shows a short message (the winit version only changes the window's title). Use **Dock back**, or the left-pointing arrow in the winit version, in any panel window to bring panels back.
 - Panels cannot be closed or lost: they are always either in the main window or in their own window.

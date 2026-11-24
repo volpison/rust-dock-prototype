@@ -25,7 +25,7 @@ Why a crate and not more files in `app-winit`: the toolkit logic is the part wor
 3. **Layout.** Rows and columns with gaps, padding, fixed and stretching sizes, in points with the scale applied and every rectangle snapped to whole pixels (the `Rect` and snapping from `app-winit/src/ui.rs` move here). Tests at 100% to 250%.
 4. **Slider and knob logic.** Value from pointer position or drag distance, clamping and steps, a finer drag with Shift, the wheel, double-click to reset. Pure and tested.
 5. **Number display.** A 7-segment display: a small table says which of the seven bars each digit lights (plus the dot and the minus), and pure code turns a number into the bars' rectangles for a given size. Pure and tested; it needs no font.
-6. **Drawing.** A small theme (colours, radii) and drawing for the four controls and the number display in `app-winit`, with hover, pressed and disabled looks, wired to the winit events.
+6. **Drawing.** A small theme (colours, radii) and drawing for the four controls and the number display in `app-winit`, with hover, pressed and disabled looks, wired to the winit events. Shown in a test window (`--controls`) so they can be tried before the real panel.
 7. **A real panel.** The Properties panel gets sliders, a knob, a toggle and buttons, replacing its coloured block. A panel is then no longer a block you can press anywhere to drag, so it gets a **grip strip** at the top that starts the drag-out and drag-back, and the rest of the panel is for its controls. The egui program gets the same controls from egui, to compare.
 8. **Gate B review** (docs only): the comparison below, and a go or no-go.
 
