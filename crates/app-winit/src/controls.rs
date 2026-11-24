@@ -43,10 +43,15 @@ pub fn digits_text(value: f32, decimals: usize) -> String {
     toolkit::digits::format_value(value, decimals)
 }
 
+/// How tall the controls need to be, in points.
+pub const HEIGHT: f32 = 2.0 * MARGIN + 2.0 * ROW + KNOB + DIGITS_HEIGHT + 3.0 * GAP;
+
 /// Where everything is, in pixels.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Plan {
     pub scale: f32,
+    /// The area the controls were placed in.
+    pub area: Rect,
     pub toggle: Rect,
     pub reset: Rect,
     pub slider: Rect,
@@ -55,11 +60,16 @@ pub struct Plan {
     pub knob_value: [Rect; 2],
 }
 
-/// The layout of the window for its size in pixels and its scale.
+/// The layout of a window that holds only the controls, for its size in pixels.
 pub fn plan(width: f32, height: f32, scale: f32) -> Plan {
+    plan_in(Rect::new(0.0, 0.0, width, height), scale)
+}
+
+/// The layout of the controls inside `area` (pixels), at `scale`. The two knobs share the
+/// width, each with its number under it, so the controls fit any width from about 240 points.
+pub fn plan_in(area: Rect, scale: f32) -> Plan {
     // Room for "100.0" in the number displays, in points.
     let digits_w = digits_style().width("100.0", 1.0);
-    let area = Rect::new(0.0, 0.0, width, height);
     let rows = Stack::column().gap(GAP).insets(Insets::all(MARGIN)).layout(
         area,
         scale,
@@ -67,6 +77,7 @@ pub fn plan(width: f32, height: f32, scale: f32) -> Plan {
             Item::stretch(Size::Fixed(ROW)),
             Item::stretch(Size::Fixed(ROW)),
             Item::stretch(Size::Fixed(KNOB)),
+            Item::stretch(Size::Fixed(DIGITS_HEIGHT)),
             Item::stretch(Size::Fill(1.0)),
         ],
     );
@@ -91,21 +102,38 @@ pub fn plan(width: f32, height: f32, scale: f32) -> Plan {
         rows[2],
         scale,
         &[
-            Item::stretch(Size::Fixed(KNOB)),
-            Item::new(Size::Fixed(digits_w), Cross::Center(DIGITS_HEIGHT)),
-            Item::stretch(Size::Fixed(KNOB)),
-            Item::new(Size::Fixed(digits_w), Cross::Center(DIGITS_HEIGHT)),
+            Item::new(Size::Fill(1.0), Cross::Center(KNOB)),
+            Item::new(Size::Fill(1.0), Cross::Center(KNOB)),
+        ],
+    );
+    let values = Stack::row().gap(GAP).layout(
+        rows[3],
+        scale,
+        &[
+            Item::new(Size::Fill(1.0), Cross::Center(DIGITS_HEIGHT)),
+            Item::new(Size::Fill(1.0), Cross::Center(DIGITS_HEIGHT)),
         ],
     );
     Plan {
         scale,
+        area,
         toggle: top[0],
         reset: top[2],
         slider: slider_row[0],
         slider_value: slider_row[1],
-        knob: [knobs[0], knobs[2]],
-        knob_value: [knobs[1], knobs[3]],
+        knob: [
+            centred(knobs[0], KNOB, scale),
+            centred(knobs[1], KNOB, scale),
+        ],
+        knob_value: [values[0], values[1]],
     }
+}
+
+/// A square of `points` in the middle of `cell` across its width, so a control is only
+/// hit where it is drawn.
+fn centred(cell: Rect, points: f32, scale: f32) -> Rect {
+    let size = (points * scale).min(cell.w);
+    Rect::new(cell.x + (cell.w - size) / 2.0, cell.y, size, cell.h).snapped()
 }
 
 impl Plan {
@@ -251,6 +279,13 @@ impl Panel {
     /// A touchpad scrolled by `pixels` (positive = up).
     pub fn wheel_pixels(&mut self, plan: &Plan, pos: (f32, f32), pixels: f32) -> bool {
         self.wheel(plan, pos, pixels / PIXELS_PER_NOTCH)
+    }
+
+    /// Forget everything held or hovered (the panel's window is going away or changing).
+    pub fn cancel(&mut self) {
+        self.end_drags();
+        self.input.cancel();
+        self.input.pointer_left();
     }
 
     fn end_drags(&mut self) {
@@ -509,5 +544,59 @@ mod tests {
         assert!(panel.pointer_moved(&p, t));
         assert!(!panel.pointer_moved(&p, (t.0 + 1.0, t.1)));
         assert!(panel.pointer_moved(&p, (1.0, 1.0)));
+    }
+
+    #[test]
+    fn the_controls_fit_the_smallest_panel_width_and_the_stated_height() {
+        // The detached panel window is 320 points wide with 12 points around the panel;
+        // the controls must fit that, and their height is what `HEIGHT` says.
+        for scale in SCALES {
+            let area = Rect::new(0.0, 0.0, 296.0 * scale, HEIGHT * scale);
+            let p = plan_in(area, scale);
+            for r in all_rects(&p) {
+                assert!(r.x >= 0.0 && r.x + r.w <= area.w + 1.0, "at {scale}: {r:?}");
+                assert!(r.y + r.h <= area.h + 1.0, "at {scale}: {r:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn the_controls_move_with_the_area_they_are_placed_in() {
+        let at_origin = plan_in(Rect::new(0.0, 0.0, 300.0, 300.0), 1.0);
+        let moved = plan_in(Rect::new(40.0, 70.0, 300.0, 300.0), 1.0);
+        assert_eq!(moved.area, Rect::new(40.0, 70.0, 300.0, 300.0));
+        assert_eq!(moved.toggle.x, at_origin.toggle.x + 40.0);
+        assert_eq!(moved.toggle.y, at_origin.toggle.y + 70.0);
+        assert_eq!(moved.knob[1].x, at_origin.knob[1].x + 40.0);
+        // A click is found where the control now is, and not where it was.
+        assert_eq!(moved.hit(centre(moved.slider)), Some(SLIDER));
+        assert_eq!(moved.hit(centre(at_origin.slider)), None);
+    }
+
+    #[test]
+    fn each_number_sits_under_its_own_knob() {
+        for scale in SCALES {
+            let p = plan_at(scale);
+            for i in 0..2 {
+                assert!(p.knob_value[i].y >= p.knob[i].y + p.knob[i].h);
+                let (k, v) = (centre(p.knob[i]).0, centre(p.knob_value[i]).0);
+                assert!((k - v).abs() <= 1.0, "at {scale}: knob {i}");
+            }
+        }
+    }
+
+    #[test]
+    fn cancel_lets_go_of_everything_held() {
+        let p = plan_at(1.0);
+        let mut panel = Panel::new();
+        let start = centre(p.slider);
+        panel.pointer_moved(&p, start);
+        panel.press(&p, start, 0);
+        panel.cancel();
+        assert_eq!(panel.input.captured(), None);
+        // The drag is over: moving the pointer no longer changes the value.
+        let before = panel.slider.value();
+        panel.pointer_moved(&p, (start.0 + 50.0, start.1));
+        assert_eq!(panel.slider.value(), before);
     }
 }
