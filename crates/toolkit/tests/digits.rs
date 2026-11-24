@@ -220,3 +220,47 @@ fn the_dot_sits_on_the_baseline() {
     let dot = extent(&all(&bars(".", 1.0, style)));
     assert!((dot.3 - digit.3).abs() <= 1.0);
 }
+
+#[test]
+fn at_tiny_sizes_the_reserved_width_still_covers_what_is_drawn() {
+    // A review found that a 1 point digit reserved 1 pixel for three dots but drew more.
+    for height in [0.0, 1.0, 3.0, 6.0] {
+        for scale in [0.5, 1.0, 2.0] {
+            let style = Style::new(height);
+            for text in ["...", "8", "88", "-1.5", "."] {
+                let width = style.width(text, scale);
+                let b = bars(text, scale, style);
+                let rects = all(&b);
+                let right = rects.iter().map(|r| r.x + r.w).fold(0.0, f32::max);
+                let left = rects.iter().map(|r| r.x).fold(f32::MAX, f32::min);
+                assert!(left >= 0.0, "{text:?} {height} at {scale}: left {left}");
+                assert!(
+                    right <= width,
+                    "{text:?} {height} at {scale}: right {right} > width {width}"
+                );
+                for (i, a) in rects.iter().enumerate() {
+                    assert!(
+                        a.w >= 1.0 && a.h >= 1.0,
+                        "{text:?} {height} at {scale}: {a:?}"
+                    );
+                    for other in &rects[i + 1..] {
+                        assert!(
+                            !overlap(*a, *other),
+                            "{text:?} {height} at {scale}: {a:?} {other:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn three_one_point_dots_get_three_separate_pixels() {
+    let style = Style::new(1.0);
+    let b = bars("...", 1.0, style);
+    assert_eq!(b.lit.len(), 3);
+    assert_eq!(style.width("...", 1.0), 5.0);
+    let xs: Vec<f32> = b.lit.iter().map(|r| r.x).collect();
+    assert_eq!(xs, [0.0, 2.0, 4.0]);
+}

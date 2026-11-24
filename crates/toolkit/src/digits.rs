@@ -73,35 +73,46 @@ pub struct Style {
     pub height: f32,
 }
 
+/// The sizes in pixels at one scale. Measuring and placing both use these, so the width a
+/// layout reserves is the width that gets drawn, even at sizes so small that a bar cannot be
+/// thinner than one pixel.
+#[derive(Debug, Clone, Copy)]
+struct Metrics {
+    height: f32,
+    width: f32,
+    thickness: f32,
+    spacing: f32,
+    /// Shaved off each side of a bar so neighbouring bars do not touch.
+    inset: f32,
+}
+
+impl Metrics {
+    fn cell_width(&self, c: char) -> f32 {
+        if c == '.' {
+            self.thickness
+        } else {
+            self.width
+        }
+    }
+}
+
 impl Style {
     pub fn new(height: f32) -> Self {
         Self { height }
     }
 
-    /// Everything below is in points.
-    fn digit_width(&self) -> f32 {
-        self.height * 0.55
-    }
-
-    fn thickness(&self) -> f32 {
-        self.height * 0.14
-    }
-
-    /// Between neighbouring cells.
-    fn spacing(&self) -> f32 {
-        self.height * 0.14
-    }
-
-    /// Shaved off each bar so neighbouring bars do not touch.
-    fn gap(&self) -> f32 {
-        self.height * 0.03
-    }
-
-    fn cell_width(&self, c: char) -> f32 {
-        if c == '.' {
-            self.thickness()
-        } else {
-            self.digit_width()
+    fn metrics(&self, scale: f32) -> Metrics {
+        let h = self.height.max(0.0) * scale;
+        // A bar is never thinner than a pixel, a digit is at least three bars wide and five
+        // tall, and cells are at least a pixel apart.
+        let thickness = (h * 0.14).max(1.0);
+        Metrics {
+            height: h.max(5.0 * thickness),
+            width: (h * 0.55).max(3.0 * thickness),
+            thickness,
+            spacing: (h * 0.14).max(1.0),
+            // Small gaps between bars, but a bar always keeps at least a pixel.
+            inset: (h * 0.03 / 2.0).min((thickness - 1.0) / 2.0).max(0.0),
         }
     }
 
@@ -112,8 +123,9 @@ impl Style {
         if cells == 0 {
             return 0.0;
         }
-        let widths: f32 = text.chars().map(|c| self.cell_width(c)).sum();
-        ((widths + self.spacing() * (cells - 1) as f32) * scale).ceil()
+        let m = self.metrics(scale);
+        let widths: f32 = text.chars().map(|c| m.cell_width(c)).sum();
+        (widths + m.spacing * (cells - 1) as f32).ceil()
     }
 }
 
@@ -130,38 +142,34 @@ pub struct Bars {
 /// and the text placed along the area by `align`. If the text is wider than the area it
 /// overflows on the side opposite to the alignment; nothing is cut.
 pub fn layout(text: &str, area: Rect, scale: f32, align: Align, style: Style) -> Bars {
-    let (h, w, t) = (
-        style.height * scale,
-        style.digit_width() * scale,
-        style.thickness() * scale,
-    );
-    let (spacing, inset) = (style.spacing() * scale, style.gap() * scale / 2.0);
+    let m = style.metrics(scale);
     let total = style.width(text, scale);
     let mut x = match align {
         Align::Start => area.x,
         Align::Center => area.x + (area.w - total) / 2.0,
         Align::End => area.x + area.w - total,
     };
-    let y = area.y + (area.h - h) / 2.0;
+    let y = area.y + (area.h - m.height) / 2.0;
 
     let mut bars = Bars::default();
     for c in text.chars() {
         if c == '.' {
             // A square dot on the baseline.
+            let (t, h) = (m.thickness, m.height);
             bars.lit.push(bar(Rect::new(x, y + h - t, t, t), 0.0));
-            x += t + spacing;
+            x += t + m.spacing;
             continue;
         }
         let lit = segments(c);
-        for (bit, rect) in digit_bars(x, y, w, h, t) {
+        for (bit, rect) in digit_bars(x, y, m.width, m.height, m.thickness) {
             let target = if lit & bit != 0 {
                 &mut bars.lit
             } else {
                 &mut bars.unlit
             };
-            target.push(bar(rect, inset));
+            target.push(bar(rect, m.inset));
         }
-        x += w + spacing;
+        x += m.width + m.spacing;
     }
     bars
 }
