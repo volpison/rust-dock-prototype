@@ -7,6 +7,7 @@
 //! whole pixels). Which control is under the pointer comes from the caller's layout, so what is drawn and
 //! what is hit stay the same thing.
 
+pub mod digits;
 pub mod geometry;
 pub mod input;
 pub mod knob;
