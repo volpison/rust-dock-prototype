@@ -9,5 +9,8 @@
 
 pub mod geometry;
 pub mod input;
+pub mod knob;
 pub mod layout;
+pub mod slider;
+pub mod value;
 pub mod widgets;

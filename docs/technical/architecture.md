@@ -14,9 +14,12 @@ A Cargo workspace: `crates/dock` (the pure library, no dependencies), `crates/to
 | `crates/dock/src/layout.rs` | the rules for where panels live |
 | `crates/dock/src/geometry.rs` | screen arithmetic for dropping a tab: outside the window? where on screen? |
 | `crates/dock/src/drag.rs` | what letting go of a dragged panel does: detach where, dock back or nothing |
-| `crates/toolkit/src/input.rs` | pointer state for a window: hover, button held (capture), click or not |
+| `crates/toolkit/src/input.rs` | pointer state for a window: hover, button held (capture), click or not; double-click detection |
 | `crates/toolkit/src/geometry.rs` | `Rect`: contains, union, snapping to whole pixels, the changed-area pixels |
 | `crates/toolkit/src/layout.rs` | rows and columns in points: gaps, insets, fixed and filling items, scaled and snapped |
+| `crates/toolkit/src/value.rs` | a value between two ends: range, steps, default, and how a drag moves it (shared by slider and knob) |
+| `crates/toolkit/src/slider.rs` | a slider: press on the thumb or the track, drag, wheel, reset |
+| `crates/toolkit/src/knob.rs` | a knob: drag up or down, wheel, reset, the pointer's angle |
 | `crates/toolkit/src/widgets.rs` | controls as state machines: button, toggle, how they look |
 | `crates/app-egui/src/panels.rs` | which panels exist, their names and content |
 | `crates/app-egui/src/app.rs` | how the layout is drawn: dock area, detached windows, menus |

@@ -117,3 +117,45 @@ impl Input {
         (hovered, pressed)
     }
 }
+
+/// Tells a double-click from two single clicks. The caller supplies the time, so this stays
+/// pure: use milliseconds from any steady clock.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DoubleClick {
+    max_ms: u64,
+    max_distance: f32,
+    last: Option<(WidgetId, u64, (f32, f32))>,
+}
+
+impl DoubleClick {
+    /// Two clicks on the same control, at most `max_ms` apart and at most `max_distance`
+    /// pixels apart, make a double-click.
+    pub fn new(max_ms: u64, max_distance: f32) -> Self {
+        Self {
+            max_ms,
+            max_distance,
+            last: None,
+        }
+    }
+
+    /// A click on `id` at `pos` at `time_ms`. True when it is the second of a double-click.
+    /// A third quick click starts a new pair rather than counting as another double-click.
+    pub fn click(&mut self, id: WidgetId, time_ms: u64, pos: (f32, f32)) -> bool {
+        let double = match self.last {
+            Some((last_id, last_ms, last_pos)) => {
+                let (dx, dy) = (pos.0 - last_pos.0, pos.1 - last_pos.1);
+                last_id == id
+                    && time_ms >= last_ms
+                    && time_ms - last_ms <= self.max_ms
+                    && (dx * dx + dy * dy).sqrt() <= self.max_distance
+            }
+            None => false,
+        };
+        self.last = if double {
+            None
+        } else {
+            Some((id, time_ms, pos))
+        };
+        double
+    }
+}
